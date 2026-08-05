@@ -48,22 +48,33 @@ const ProfilePage = lazy(() => import('@/features/auth/pages/profile-page'));
 // ── Portals ─────────────────────────────────────────────────────────────────
 const StudentDashboard = lazy(() => import('@/features/student/pages/student-dashboard'));
 const StudentSubjectsPage = lazy(() => import('@/features/student/pages/student-subjects-page'));
+const StudentCoursePage = lazy(() => import('@/features/student/pages/student-course-page'));
 const TeacherDashboard = lazy(() => import('@/features/teacher/pages/teacher-dashboard'));
 const TeacherClassesPage = lazy(() => import('@/features/teacher/pages/teacher-classes-page'));
+const TeacherClassPage = lazy(() => import('@/features/teacher/pages/teacher-class-page'));
+const TeacherSubjectsPage = lazy(() => import('@/features/teacher/pages/teacher-subjects-page'));
+const TeacherSubjectPage = lazy(() => import('@/features/teacher/pages/teacher-subject-page'));
 const TeacherGradingPage = lazy(() => import('@/features/teacher/pages/teacher-grading-page'));
+const AdminClassesPlaceholder = lazy(() => import('@/routes/pages/admin-classes-page'));
 const ParentDashboard = lazy(() => import('@/features/parent/pages/parent-dashboard'));
 const ParentChildrenPage = lazy(() => import('@/features/parent/pages/parent-children-page'));
 const AdminDashboard = lazy(() => import('@/features/admin/pages/admin-dashboard'));
 const AdminStudentsPage = lazy(() => import('@/features/admin/pages/admin-students-page'));
+const AdminTeachersPage = lazy(() => import('@/features/admin/pages/admin-teachers-page'));
+const AdminParentsPage = lazy(() => import('@/features/admin/pages/admin-parents-page'));
+const AdminSubjectsPage = lazy(() => import('@/features/admin/pages/admin-subjects-page'));
+const AdminSessionsPage = lazy(() => import('@/features/admin/pages/admin-sessions-page'));
 
 // ── Shared modules ──────────────────────────────────────────────────────────
 const AssignmentsPage = lazy(() => import('@/features/assignments/pages/assignments-page'));
-const AttendancePage = lazy(() => import('@/features/attendance/pages/attendance-page'));
+const StudentAssignmentDetailPage = lazy(
+  () => import('@/features/assignments/pages/student-assignment-detail-page'),
+);
 const GradesPage = lazy(() => import('@/features/grades/pages/grades-page'));
 const TimetablePage = lazy(() => import('@/features/timetable/pages/timetable-page'));
 const QuizzesPage = lazy(() => import('@/features/quizzes/pages/quizzes-page'));
 const NotificationsPage = lazy(() => import('@/features/notifications/pages/notifications-page'));
-const AnnouncementsPage = lazy(() => import('@/routes/pages/announcements-page'));
+const AnnouncementsPage = lazy(() => import('@/features/announcements/pages/announcements-page'));
 const AuditPage = lazy(() => import('@/routes/pages/audit-page'));
 
 // ── System ──────────────────────────────────────────────────────────────────
@@ -78,7 +89,6 @@ function sharedPortalRoutes(): ReactNode {
   return (
     <>
       <Route path="assignments" element={<AssignmentsPage />} />
-      <Route path="attendance" element={<AttendancePage />} />
       <Route path="grades" element={<GradesPage />} />
       <Route path="timetable" element={<TimetablePage />} />
       <Route path="announcements" element={<AnnouncementsPage />} />
@@ -131,6 +141,8 @@ export function AppRoutes() {
               <>
                 <Route index element={<StudentDashboard />} />
                 <Route path="subjects" element={<StudentSubjectsPage />} />
+                <Route path="subjects/:subjectId" element={<StudentCoursePage />} />
+                <Route path="assignments/:assignmentId" element={<StudentAssignmentDetailPage />} />
                 <Route path="quizzes" element={<QuizzesPage />} />
               </>,
             )}
@@ -141,7 +153,9 @@ export function AppRoutes() {
               <>
                 <Route index element={<TeacherDashboard />} />
                 <Route path="classes" element={<TeacherClassesPage />} />
-                <Route path="lessons" element={<StudentSubjectsPage />} />
+                <Route path="classes/:classId" element={<TeacherClassPage />} />
+                <Route path="subjects" element={<TeacherSubjectsPage />} />
+                <Route path="subjects/:subjectId" element={<TeacherSubjectPage />} />
                 <Route path="grading" element={<TeacherGradingPage />} />
                 <Route path="quizzes" element={<QuizzesPage />} />
               </>,
@@ -162,10 +176,16 @@ export function AppRoutes() {
               <>
                 <Route index element={<AdminDashboard />} />
                 <Route path="students" element={<AdminStudentsPage />} />
-                <Route path="teachers" element={<TeacherClassesPage />} />
-                <Route path="parents" element={<ParentChildrenPage />} />
-                <Route path="classes" element={<TeacherClassesPage />} />
-                <Route path="subjects" element={<StudentSubjectsPage />} />
+                <Route path="teachers" element={<AdminTeachersPage />} />
+                <Route path="parents" element={<AdminParentsPage />} />
+                {/* The administrator's class manager is its own screen and is
+                    not built yet. It must not fall back to the teacher's list:
+                    that page is scoped to `teacher_assignments`, so an
+                    administrator would be shown an empty register and told
+                    they teach nothing. */}
+                <Route path="classes" element={<AdminClassesPlaceholder />} />
+                <Route path="subjects" element={<AdminSubjectsPage />} />
+                <Route path="sessions" element={<AdminSessionsPage />} />
                 <Route path="audit" element={<AuditPage />} />
               </>,
             )}
