@@ -1,0 +1,80 @@
+<div
+  style="
+    font-family:
+      'Plus Jakarta Sans',
+      Segoe UI,
+      system-ui,
+      sans-serif;
+    background: #f6f7f9;
+    padding: 32px;
+  "
+>
+  <div
+    style="
+      max-width: 520px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #e4e7ee;
+      border-radius: 16px;
+      padding: 32px;
+    "
+  >
+    <div style="font-size: 18px; font-weight: 800; letter-spacing: -0.2px; color: #101828">
+      GNASchools
+    </div>
+    <div
+      style="
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.4px;
+        color: #8a93a6;
+        margin-top: 2px;
+      "
+    >
+      LEARNING MANAGEMENT SYSTEM
+    </div>
+
+    <h1
+      style="
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.6px;
+        color: #101828;
+        margin: 28px 0 10px;
+      "
+    >
+      You have been invited
+    </h1>
+    <p style="font-size: 14.5px; line-height: 1.6; color: #576177; margin: 0 0 24px">
+      An administrator has created a GNASchools LMS account for
+      <strong style="color: #101828">{{ .Email }}</strong>. Accept the invitation to set your
+      password and get started.
+    </p>
+
+    <a
+      href="{{ .ConfirmationURL }}"
+      style="
+        display: inline-block;
+        background: #2563eb;
+        color: #ffffff;
+        font-size: 14.5px;
+        font-weight: 700;
+        text-decoration: none;
+        padding: 12px 22px;
+        border-radius: 10px;
+      "
+      >Accept the invitation</a
+    >
+
+    <p style="font-size: 13px; line-height: 1.6; color: #8a93a6; margin: 26px 0 0">
+      If the button does not work, paste this link into your browser:<br />
+      <span style="color: #2563eb; word-break: break-all">{{ .ConfirmationURL }}</span>
+    </p>
+
+    <hr style="border: 0; border-top: 1px solid #e4e7ee; margin: 26px 0" />
+    <p style="font-size: 12px; line-height: 1.6; color: #8a93a6; margin: 0">
+      This invitation expires in 24 hours. Ask your school administrator to resend it if you miss
+      the window.
+    </p>
+  </div>
+</div>

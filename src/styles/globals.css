@@ -1,0 +1,252 @@
+@import 'tailwindcss';
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ *  GNASchools LMS — design tokens
+ * ═══════════════════════════════════════════════════════════════════════════
+ *  Two vocabularies over one palette:
+ *
+ *    --app-*   the product's own names (surface-2, text-3, primary-soft).
+ *              Lifted verbatim from the design source so a value can be traced
+ *              back to the prototype.
+ *
+ *    --color-* the shadcn/ui contract (background, card, muted-foreground …).
+ *              Aliases, not new colours — every one resolves to an --app-*.
+ *
+ *  Changing a colour means changing it once, in the :root / .dark blocks.
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Ground */
+  --app-bg: #f6f7f9;
+  --app-surface: #ffffff;
+  --app-surface-2: #f1f3f7;
+  --app-surface-3: #e9ecf2;
+
+  /* Lines */
+  --app-border: #e4e7ee;
+  --app-border-strong: #d2d7e2;
+
+  /* Ink */
+  --app-text: #101828;
+  --app-text-2: #576177;
+  --app-text-3: #8a93a6;
+
+  /* Brand */
+  --app-primary: #2563eb;
+  --app-primary-hover: #1d4ed8;
+  --app-primary-soft: #eef4ff;
+  --app-primary-border: #c9dcff;
+  --app-on-primary: #ffffff;
+
+  /* Status */
+  --app-green: #087443;
+  --app-green-soft: #e7f6ee;
+  --app-amber: #9a5b00;
+  --app-amber-soft: #fdf3e2;
+  --app-red: #b42318;
+  --app-red-soft: #fdeceb;
+  --app-violet: #6b3fd4;
+  --app-violet-soft: #f1ecfe;
+
+  /* Elevation */
+  --app-shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.04);
+  --app-shadow-md: 0 4px 12px rgb(16 24 40 / 0.07), 0 2px 4px rgb(16 24 40 / 0.04);
+  --app-shadow-lg: 0 16px 40px rgb(16 24 40 / 0.14), 0 4px 10px rgb(16 24 40 / 0.06);
+
+  --radius: 0.625rem;
+}
+
+.dark {
+  --app-bg: #0c0f14;
+  --app-surface: #14181f;
+  --app-surface-2: #1b212a;
+  --app-surface-3: #222a35;
+
+  --app-border: #242c37;
+  --app-border-strong: #313b49;
+
+  --app-text: #e8ecf3;
+  --app-text-2: #98a2b3;
+  --app-text-3: #6c7787;
+
+  --app-primary: #4d8bff;
+  --app-primary-hover: #6aa0ff;
+  --app-primary-soft: #15233c;
+  --app-primary-border: #263c60;
+  --app-on-primary: #0c0f14;
+
+  --app-green: #4ade80;
+  --app-green-soft: #10241a;
+  --app-amber: #fbbf24;
+  --app-amber-soft: #2a2010;
+  --app-red: #fb7185;
+  --app-red-soft: #2c1418;
+  --app-violet: #a78bfa;
+  --app-violet-soft: #1e1a33;
+
+  --app-shadow: 0 1px 2px rgb(0 0 0 / 0.5);
+  --app-shadow-md: 0 4px 14px rgb(0 0 0 / 0.5);
+  --app-shadow-lg: 0 18px 44px rgb(0 0 0 / 0.6);
+}
+
+@theme inline {
+  /* ── shadcn/ui semantic surface ─────────────────────────────────────── */
+  --color-background: var(--app-bg);
+  --color-foreground: var(--app-text);
+
+  --color-card: var(--app-surface);
+  --color-card-foreground: var(--app-text);
+  --color-popover: var(--app-surface);
+  --color-popover-foreground: var(--app-text);
+
+  --color-primary: var(--app-primary);
+  --color-primary-foreground: var(--app-on-primary);
+
+  --color-secondary: var(--app-surface-2);
+  --color-secondary-foreground: var(--app-text);
+
+  --color-muted: var(--app-surface-2);
+  --color-muted-foreground: var(--app-text-3);
+
+  --color-accent: var(--app-surface-2);
+  --color-accent-foreground: var(--app-text);
+
+  --color-destructive: var(--app-red);
+  --color-destructive-foreground: #ffffff;
+
+  --color-border: var(--app-border);
+  --color-input: var(--app-border);
+  --color-ring: var(--app-primary);
+
+  /* ── Product vocabulary, usable as utilities ────────────────────────── */
+  --color-surface: var(--app-surface);
+  --color-surface-2: var(--app-surface-2);
+  --color-surface-3: var(--app-surface-3);
+  --color-border-strong: var(--app-border-strong);
+  --color-ink: var(--app-text);
+  --color-ink-2: var(--app-text-2);
+  --color-ink-3: var(--app-text-3);
+  --color-brand: var(--app-primary);
+  --color-brand-hover: var(--app-primary-hover);
+  --color-brand-soft: var(--app-primary-soft);
+  --color-brand-border: var(--app-primary-border);
+
+  --color-success: var(--app-green);
+  --color-success-soft: var(--app-green-soft);
+  --color-warning: var(--app-amber);
+  --color-warning-soft: var(--app-amber-soft);
+  --color-danger: var(--app-red);
+  --color-danger-soft: var(--app-red-soft);
+  --color-info: var(--app-violet);
+  --color-info-soft: var(--app-violet-soft);
+
+  /* ── Type ───────────────────────────────────────────────────────────── */
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'JetBrains Mono', 'SFMono-Regular', Menlo, monospace;
+
+  /* ── Radii ──────────────────────────────────────────────────────────── */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* ── Elevation ──────────────────────────────────────────────────────── */
+  --shadow-card: var(--app-shadow);
+  --shadow-raised: var(--app-shadow-md);
+  --shadow-overlay: var(--app-shadow-lg);
+
+  /* ── Motion ─────────────────────────────────────────────────────────── */
+  --animate-pop: pop 0.14s ease both;
+  --animate-fade: fade 0.2s ease both;
+  --animate-rise: rise 0.24s ease both;
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  /* Never leave the browser default focus ring — it disappears against the
+     dark theme's surfaces. */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  ::selection {
+    background: var(--app-primary-soft);
+    color: var(--app-text);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--app-border-strong);
+    border: 3px solid transparent;
+    border-radius: 99px;
+    background-clip: content-box;
+  }
+
+  /* Respect the OS setting rather than animating regardless. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@utility skeleton {
+  @apply animate-pulse rounded-md bg-surface-2;
+}

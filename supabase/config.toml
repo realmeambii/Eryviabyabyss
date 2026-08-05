@@ -1,0 +1,144 @@
+# ═══════════════════════════════════════════════════════════════════════════
+#  Supabase CLI configuration — local development stack.
+#  Docs: https://supabase.com/docs/guides/local-development/cli/config
+#
+#  Values here shape `supabase start` / `supabase db reset` only. Production
+#  settings live in the Supabase dashboard; see docs/DEPLOYMENT.md for the
+#  list that must be kept in step.
+# ═══════════════════════════════════════════════════════════════════════════
+
+project_id = "gnaschools-lms"
+
+[api]
+enabled = true
+port = 54321
+# `app` is deliberately absent: the RLS helpers in that schema must not be
+# reachable over the REST API.
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+
+[db.pooler]
+enabled = true
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed/seed.sql"]
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1"
+
+# Catches every outbound mail locally — password resets, magic links,
+# verification. Open http://127.0.0.1:54324.
+# (Was [inbucket]; the CLI renamed this section to [local_smtp].)
+[local_smtp]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+# Per-bucket limits are set in 20260801001100_storage.sql; this is the ceiling.
+file_size_limit = "100MiB"
+
+[realtime]
+enabled = true
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = [
+  "http://localhost:5173",
+  "http://localhost:5173/auth/callback",
+  "http://localhost:5173/auth/reset-password",
+  "http://localhost:4173",
+]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+# Phase 1 provisions accounts through the administrator portal and the seed
+# script. Flip to `true` if the school wants open self-registration.
+enable_signup = true
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+secure_password_change = true
+# Confirmations stay ON locally too, so the sign-up path under test is the same
+# one production runs. The seeded accounts are still usable immediately because
+# the seed sets `email_confirmed_at` directly rather than routing 375 accounts
+# through Inbucket.
+max_frequency = "10s"
+otp_length = 6
+otp_expiry = 3600
+
+# NOTE: `content_path` resolves from the project root (the CLI's working
+# directory), not from this file's directory — hence the `supabase/` prefix.
+[auth.email.template.confirmation]
+subject = "Confirm your GNASchools LMS account"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Reset your GNASchools LMS password"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.invite]
+subject = "You have been invited to GNASchools LMS"
+content_path = "./supabase/templates/invite.html"
+
+[auth.sessions]
+# Force a re-login after a fortnight of inactivity, and cap any single session
+# at 30 days regardless of activity.
+inactivity_timeout = "336h"
+timebox = "720h"
+
+[auth.rate_limit]
+email_sent = 10
+sign_in_sign_ups = 30
+token_refresh = 150
+token_verifications = 30
+
+# ── OAuth providers ────────────────────────────────────────────────────────
+# Wired but disabled. Phase 1 ships email/password; turning one of these on is
+# a config change plus a redirect URL, not a code change — the app reads the
+# enabled list from VITE_-flagged config and renders the buttons it is told to.
+[auth.external.google]
+enabled = false
+client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
+redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"
+skip_nonce_check = false
+
+[auth.external.azure]
+enabled = false
+client_id = "env(SUPABASE_AUTH_AZURE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_AZURE_SECRET)"
+redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"
+
+[functions.send-notification-email]
+verify_jwt = true
+
+# Invoked by a scheduler, not by a signed-in user, so it authenticates with the
+# FUNCTION_CRON_SECRET header instead of a JWT.
+[functions.daily-reminders]
+verify_jwt = false
+
+[analytics]
+enabled = false
+
+[edge_runtime]
+enabled = true
+policy = "oneshot"
+inspector_port = 8083

@@ -1,0 +1,10 @@
+dist
+coverage
+node_modules
+package-lock.json
+# Editor/agent-local settings — not project source.
+.claude
+supabase/.branches
+supabase/.temp
+src/shared/types/database.types.ts
+*.md

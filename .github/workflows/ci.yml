@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A second push to the same branch cancels the first — no point finishing a
+# build for a commit that has already been superseded.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Format · lint · build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Prettier
+        run: npm run format:check
+
+      - name: ESLint
+        run: npm run lint
+
+      # `npm run build` is `tsc -b && vite build`, so this is the type check too.
+      - name: Type check and build
+        run: npm run build
+        env:
+          # The build never evaluates env.ts — that happens in the browser — but
+          # Vite still wants the variables defined. These are placeholders, not
+          # credentials.
+          VITE_SUPABASE_URL: http://127.0.0.1:54321
+          VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key-not-a-secret
+          VITE_APP_ENV: local
+          VITE_APP_URL: http://localhost:5173
+
+  database:
+    name: Migrations and seed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Replays every migration in order against an empty database, then runs
+      # the seed. This is the step that catches a migration which only works
+      # against a developer's current local state — and it exercises the
+      # assertions at the end of 1300_hardening.sql.
+      - name: Start local stack
+        run: supabase start
+
+      - name: Reset, migrate and seed
+        run: supabase db reset --debug
+
+      - name: Schema lint
+        run: supabase db lint --level warning
+
+      # Advisory until the first `npm run db:types` against a live database.
+      # `database.types.ts` currently ships hand-maintained in the CLI's shape,
+      # which is behaviourally identical but not byte-identical — the CLI also
+      # emits `Relationships` metadata that nothing in the app reads. Flip this
+      # to blocking (drop `continue-on-error`) once the file has been generated
+      # and committed for real.
+      - name: Type drift check
+        continue-on-error: true
+        run: |
+          supabase gen types typescript --local --schema public \
+            > /tmp/database.types.ts
+          if ! diff -q /tmp/database.types.ts src/shared/types/database.types.ts; then
+            echo "::error::database.types.ts is stale. Run 'npm run db:types' and commit the result."
+            diff -u src/shared/types/database.types.ts /tmp/database.types.ts || true
+            exit 1
+          fi
+
+  migrate:
+    name: Deploy migrations
+    needs: [verify, database]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # The database is deployed before Vercel promotes the new frontend.
+      # Reversing that order means the new app queries a column that does not
+      # exist yet.
+      - name: Push migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
+          supabase db push
+
+      - name: Deploy Edge Functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase functions deploy send-notification-email --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
+          supabase functions deploy daily-reminders --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
