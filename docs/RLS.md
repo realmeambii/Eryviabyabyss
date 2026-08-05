@@ -144,7 +144,7 @@ no longer matches the `USING` clause, so it stops being the student's to edit.
 Everything resolves through `parent_students`:
 
 ```sql
-create policy attendance_select_authorised on public.attendance_records
+create policy grades_select_authorised on public.grades
   for select to authenticated
   using ((select app.can_read_student(student_id)));
 ```

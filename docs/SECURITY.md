@@ -222,8 +222,59 @@ credentialed endpoint is how a phishing page ends up able to call them.
 
 | Function | Auth | Why |
 | --- | --- | --- |
+| `admin-users` | `verify_jwt = true` + administrator re-check | GoTrue admin API needs the service-role key |
 | `send-notification-email` | `verify_jwt = true` | Acts for a signed-in caller |
 | `daily-reminders` | `x-cron-secret` | Scheduler; there is no caller |
+
+`admin-users` is the only place in the project where account creation, password
+resets and deactivation happen, because all three are GoTrue *admin* calls: they
+authenticate with the service-role key, which bypasses every policy in this
+document and must never reach a browser bundle.
+
+Four things gate it, in order:
+
+1. `verify_jwt = true`, so the gateway rejects an unsigned request first.
+2. The caller is resolved from that JWT, never from the request body.
+3. Their administrator grant is re-read from `user_roles`. A role claim inside a
+   token is only as fresh as the token; a grant revoked five minutes ago has to
+   stop working now.
+4. `school_id` comes from the caller's own profile. That is the difference
+   between "provision into my school" and "provision into any school in the
+   deployment".
+
+It will not provision an administrator, and it refuses to reset or deactivate
+one. Administrators are peers — a single compromised session that could mint a
+second permanent account, or take over the other administrators, is a much
+larger incident than one that can only add pupils. Adding an administrator is a
+deliberate act performed against the database directly.
+
+Deactivation **bans the GoTrue account** as well as flipping `users.status`.
+Flipping the profile column alone changes nothing an attacker cares about: their
+JWT stays valid and keeps refreshing. Banning refuses refreshes immediately, and
+the outstanding access token dies at its next expiry — an hour at most, per
+`jwt_expiry`.
+
+Provisioning is transactional in effect: if anything after the auth account
+fails — a duplicate admission number, a class in another school — the account is
+deleted again, so a login never survives without the profile behind it.
+
+The role is **stated, not inferred**. `handle_new_user()` reads the role from
+`raw_app_meta_data`, which is right for a sign-up but wrong for the admin API:
+`createUser` inserts the row and applies `app_metadata` afterwards, so the
+trigger fires against a row that does not carry it yet and falls back to
+`student`. Asking for a teacher used to produce a student, silently. Provisioned
+inserts are now marked `provisioned_by_admin`, the trigger creates the profile
+and stops, and `provision_user_role()` sets the school, the grant and the
+extension row explicitly.
+
+`public.provision_user_role()` grants a role to an arbitrary user, so it is
+`service_role` only — EXECUTE is revoked from `public`, `anon` and
+`authenticated`, and calling it through PostgREST with a teacher's token returns
+`42501`. The marker that suppresses the trigger lives in `raw_user_meta_data`,
+which is attacker-controlled; that is safe only because of which way it fails.
+Setting it on your own sign-up grants nothing — it skips the block that hands
+out a role, leaving you with no grant and the pending-access screen. The worst a
+forger can do with it is deny themselves the student role.
 
 `send-notification-email` reads the notification with the **caller's** client
 first, so RLS decides whether they may act on it at all. Only then does it
@@ -248,6 +299,12 @@ assignment. A retried invocation must not send a second copy.
 `audit_logs` records inserts, updates and deletes on `users`, `user_roles`,
 `enrollments`, `grades`, `assignment_submissions` and `teacher_assignments` —
 with the before/after row image, the changed column list and the actor.
+
+`admin-users` writes its own entry on top of that trigger trail. It has to:
+under the service role `auth.uid()` is null, so `app.audit_row()` would record
+the change with nobody attached to it. The explicit row carries the
+administrator who asked for it, and `context.via = 'admin-users'` marks where it
+came in.
 
 Append-only, twice over: no write policy, and no write privilege.
 `app.audit_row()` strips `medical_notes`, `metadata`, `responses` and

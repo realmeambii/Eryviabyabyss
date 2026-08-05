@@ -21,6 +21,7 @@ export interface QuizFilters {
   subjectId?: string;
   sessionId?: string;
   status?: Quiz['status'];
+  limit?: number;
 }
 
 export async function listQuizzes(filters: QuizFilters = {}): Promise<Quiz[]> {
@@ -33,6 +34,7 @@ export async function listQuizzes(filters: QuizFilters = {}): Promise<Quiz[]> {
   if (filters.subjectId) query = query.eq('subject_id', filters.subjectId);
   if (filters.sessionId) query = query.eq('academic_session_id', filters.sessionId);
   if (filters.status) query = query.eq('status', filters.status);
+  if (filters.limit) query = query.limit(filters.limit);
 
   const { data, error } = await query;
   if (error) throw toAppError(error);

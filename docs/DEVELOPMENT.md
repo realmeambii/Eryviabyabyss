@@ -219,11 +219,34 @@ They are Deno, not Node: `.ts` extensions on relative imports, `jsr:`/`npm:`
 specifiers, `Deno.env` rather than `process.env`. ESLint ignores the folder for
 that reason — use `deno check` or the Deno VS Code extension.
 
-**Reach for one only when Postgres genuinely cannot do the job.** The two that
-exist are there because they need an outbound HTTPS call with a secret
-(`send-notification-email`) or because they have no triggering event at all
+**Reach for one only when Postgres genuinely cannot do the job.** The three that
+exist are there because they need the service-role key for a GoTrue admin call
+(`admin-users` — creating a login, setting someone else's password, ending their
+sessions), because they need an outbound HTTPS call with a secret
+(`send-notification-email`), or because they have no triggering event at all
 (`daily-reminders` — "nothing happened and the deadline is tomorrow" is the
 *absence* of a row change, which only a schedule can notice).
+
+Everything else an administrator does still goes straight to PostgREST. Editing
+a teacher's qualification or linking a guardian to a child is an ordinary write
+that `teachers_update_self_or_admin` and `parent_students_insert_admin` already
+authorise; routing it through a function would only add a hop and a second copy
+of the rule.
+
+`admin-users` is the one that needs a signed-in caller to exercise. Grab an
+administrator's access token from the browser (`localStorage`, the
+`sb-…-auth-token` entry) and post an action to it:
+
+```bash
+curl -i http://127.0.0.1:54321/functions/v1/admin-users \
+  -H "Authorization: Bearer <access-token>" \
+  -H "apikey: <anon-key>" \
+  -H "content-type: application/json" \
+  -d '{"action":"create","role":"student","email":"ada@example.com","firstName":"Ada","lastName":"Okoye"}'
+```
+
+A non-administrator token gets a 403 from the same endpoint — that check is
+re-read from `user_roles` on every call, not taken from the token.
 
 ---
 

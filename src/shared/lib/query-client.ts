@@ -13,9 +13,20 @@ import { AppError, toAppError } from './errors';
  *     well produces two error messages for one problem. A mutation failure has
  *     no natural home in the UI, so it needs the toast.
  *
+ *     A mutation that *does* have a natural home — a long form that should
+ *     show "that admission number is already in use" next to the field rather
+ *     than in a toast that fades — opts out with
+ *     `meta: { silenceErrorToast: true }` and takes responsibility for
+ *     rendering the failure itself.
+ *
  *  2. Nothing retries a permission or validation error. RLS denying a write
  *     will deny it again three times over; retrying only delays the message.
  */
+
+/** Set on a mutation's `meta` to take ownership of rendering its own errors. */
+export interface MutationMeta {
+  silenceErrorToast?: boolean;
+}
 
 function shouldRetry(failureCount: number, error: unknown): boolean {
   const appError = toAppError(error);
@@ -58,9 +69,12 @@ export function createQueryClient(): QueryClient {
     }),
 
     mutationCache: new MutationCache({
-      onError: (error) => {
+      onError: (error, _variables, _context, mutation) => {
         const appError = toAppError(error);
         if (appError.kind === 'auth') return;
+
+        const meta = mutation.options.meta as MutationMeta | undefined;
+        if (meta?.silenceErrorToast) return;
 
         toast.error(appError.message, {
           description: appError.detail,

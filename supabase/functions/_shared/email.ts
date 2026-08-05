@@ -81,7 +81,12 @@ export function renderEmail(options: {
 </div>`;
 }
 
-function escapeHtml(value: string): string {
+/**
+ * Exported because `renderEmail`'s `body` is passed through unescaped — it is
+ * markup by design. Anything interpolated *into* that markup is not, and has to
+ * come through here first.
+ */
+export function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

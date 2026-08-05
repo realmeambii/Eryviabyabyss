@@ -5,7 +5,7 @@ React 19 and Supabase.
 
 **This repository is Phase 1: the foundation.** The database, security model,
 authentication and application architecture are complete and production-shaped.
-The feature screens — assignments, quizzes, attendance, grades, timetable —
+The feature screens — assignments, quizzes, grades, timetable —
 land in Phase 2 on top of exactly this groundwork.
 
 ---
@@ -111,7 +111,6 @@ administrator — the rows differ because the policies differ.
 │   │   ├── parent/
 │   │   ├── assignments/
 │   │   ├── quizzes/
-│   │   ├── attendance/
 │   │   ├── grades/
 │   │   ├── timetable/
 │   │   └── notifications/
@@ -201,7 +200,6 @@ stated deliverable needs it:
   many-to-many relationship (siblings, two guardians). Every parent-side policy
   resolves through it.
 - **`timetable_slots`** — the brief asks for seeded timetables.
-- **`attendance_records`** — the brief asks for an attendance feature module.
 - **`lessons`** — gives the required "Lesson Materials" storage bucket
   something to attach to.
 

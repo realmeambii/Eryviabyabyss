@@ -88,10 +88,16 @@ export default tseslint.config(
     },
   },
 
-  // Barrels re-export types and constants alongside components; the Fast Refresh
-  // rule is not meaningful there.
+  // Barrels re-export types and constants alongside components, and main.tsx is
+  // the entry point rather than a component module; the Fast Refresh rule has
+  // nothing useful to say about either.
   {
-    files: ['src/**/index.ts', 'src/**/index.tsx', 'src/shared/components/ui/**/*.tsx'],
+    files: [
+      'src/**/index.ts',
+      'src/**/index.tsx',
+      'src/main.tsx',
+      'src/shared/components/ui/**/*.tsx',
+    ],
     rules: { 'react-refresh/only-export-components': 'off' },
   },
 

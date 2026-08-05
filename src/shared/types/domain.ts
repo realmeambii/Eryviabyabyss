@@ -26,7 +26,6 @@ export type Enrollment = Tables<'enrollments'>;
 export type TeacherAssignment = Tables<'teacher_assignments'>;
 export type Lesson = Tables<'lessons'>;
 export type TimetableSlot = Tables<'timetable_slots'>;
-export type AttendanceRecord = Tables<'attendance_records'>;
 export type Assignment = Tables<'assignments'>;
 export type AssignmentSubmission = Tables<'assignment_submissions'>;
 export type Quiz = Tables<'quizzes'>;
@@ -44,7 +43,6 @@ export type AnnouncementAudience = Enums<'announcement_audience'>;
 export type AnnouncementPriority = Enums<'announcement_priority'>;
 export type AssessmentType = Enums<'assessment_type'>;
 export type AttemptStatus = Enums<'attempt_status'>;
-export type AttendanceStatus = Enums<'attendance_status'>;
 export type EmploymentType = Enums<'employment_type'>;
 export type EnrollmentStatus = Enums<'enrollment_status'>;
 export type FileVisibility = Enums<'file_visibility'>;
@@ -169,3 +167,19 @@ export interface SortParams<TColumn extends string = string> {
   sortBy?: TColumn;
   ascending?: boolean;
 }
+
+// ── Teacher module ──────────────────────────────────────────────────────────
+export type QuestionBankItem = Tables<'question_bank_items'>;
+export type StudentNote = Tables<'student_notes'>;
+
+/** One criterion of an assignment rubric, as stored in `assignments.rubric`. */
+export interface RubricCriterion {
+  id: string;
+  criterion: string;
+  points: number;
+  descriptor?: string;
+}
+
+export type Conversation = Tables<'conversations'>;
+export type ConversationParticipant = Tables<'conversation_participants'>;
+export type Message = Tables<'messages'>;

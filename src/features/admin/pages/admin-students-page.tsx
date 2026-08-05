@@ -1,44 +1,152 @@
 import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, GraduationCap, Search } from 'lucide-react';
+import { GraduationCap, Plus, Search } from 'lucide-react';
 
-import { EmptyState } from '@/shared/components/empty-state';
+import { DataTable, type Column } from '@/shared/components/data-table';
 import { PageHeader } from '@/shared/components/page-header';
 import { UserAvatar } from '@/shared/components/user-avatar';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
-import { Card } from '@/shared/components/ui/card';
 import { Input } from '@/shared/components/ui/input';
-import { Skeleton } from '@/shared/components/ui/skeleton';
+import { Select } from '@/shared/components/ui/select';
 import { useDebouncedValue } from '@/shared/hooks/use-debounced-value';
 import { PAGE_SIZE } from '@/shared/lib/constants';
 import { queryKeys } from '@/shared/lib/query-keys';
 import { className as formatClassName, formatDate, formatNumber } from '@/shared/utils/format';
+import type { StudentStatus } from '@/shared/types';
 
-import { listStudents } from '../api/admin.service';
+import { listStudents, type StudentRow } from '../api/admin.service';
+import { AccountActions } from '../components/account-actions';
+import { AccountStatusBadge } from '../components/account-status-badge';
+import { NewUserDialog } from '../components/new-user-dialog';
+import { useClasses } from '../hooks/use-admin-academics';
 
 /**
  * The student register.
  *
- * A real, paginated table rather than a placeholder — it is the quickest way
- * to prove the whole stack end to end: an administrator sees 200 rows here,
- * and the same query signed in as a teacher returns only their own students,
- * because `students_select_authorised` says so.
+ * Paged server-side, unlike the staff and guardian registers: a secondary
+ * school has a few dozen teachers and a few hundred parents, but the roll runs
+ * to thousands, and `search_students()` exists precisely so a keystroke does
+ * not drag the whole thing across the wire.
+ *
+ * Two status columns, deliberately. `status` is where the pupil stands with the
+ * school; the account badge is whether their login works. They usually agree —
+ * deactivating an account moves both — but "graduated" and "cannot sign in" are
+ * different facts and a school needs to see which is which.
  */
+
+const ENROLMENT_STATUSES: { value: StudentStatus; label: string }[] = [
+  { value: 'active', label: 'Active' },
+  { value: 'graduated', label: 'Graduated' },
+  { value: 'transferred', label: 'Transferred' },
+  { value: 'withdrawn', label: 'Withdrawn' },
+  { value: 'suspended', label: 'Suspended' },
+];
+
 export default function AdminStudentsPage() {
   const [search, setSearch] = useState('');
+  const [classId, setClassId] = useState('');
+  const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
+  const [creating, setCreating] = useState(false);
+
   const debouncedSearch = useDebouncedValue(search, 350);
+  const classes = useClasses();
+
+  const filters = {
+    search: debouncedSearch,
+    classId: classId || undefined,
+    status: (status || undefined) as StudentStatus | undefined,
+  };
 
   const query = useQuery({
-    queryKey: queryKeys.students.list({ search: debouncedSearch, page }),
-    queryFn: () => listStudents({ search: debouncedSearch, page, pageSize: PAGE_SIZE }),
+    queryKey: queryKeys.students.list({ ...filters, page }),
+    queryFn: () => listStudents({ ...filters, page, pageSize: PAGE_SIZE }),
     // Keeps the previous page on screen while the next one loads, instead of
     // collapsing the table to a spinner on every keystroke.
     placeholderData: keepPreviousData,
   });
 
-  const rows = query.data?.rows ?? [];
+  /** Any filter change invalidates the current page number. */
+  const resetTo = (apply: () => void) => {
+    apply();
+    setPage(1);
+  };
+
+  const columns: Column<StudentRow>[] = [
+    {
+      id: 'student',
+      header: 'Student',
+      cell: (row) => (
+        <div className="flex items-center gap-3">
+          <UserAvatar fullName={row.user?.full_name} avatarPath={row.user?.avatar_path} />
+          <div className="min-w-0">
+            <p className="truncate font-semibold text-ink">{row.user?.full_name ?? '—'}</p>
+            <p className="truncate text-[12px] text-ink-3">{row.user?.email ?? '—'}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'admission_number',
+      header: 'Admission no.',
+      className: 'font-mono text-[12.5px] whitespace-nowrap',
+      cell: (row) => row.admission_number,
+    },
+    {
+      id: 'class',
+      header: 'Class',
+      cell: (row) => (
+        <span className="whitespace-nowrap text-ink-2">
+          {row.current_class
+            ? formatClassName(row.current_class.name, row.current_class.arm)
+            : 'Not enrolled'}
+        </span>
+      ),
+    },
+    {
+      id: 'admitted',
+      header: 'Admitted',
+      secondary: true,
+      cell: (row) => (
+        <span className="whitespace-nowrap text-ink-3">{formatDate(row.admission_date)}</span>
+      ),
+    },
+    {
+      id: 'enrolment',
+      header: 'Enrolment',
+      secondary: true,
+      cell: (row) => (
+        <Badge variant={row.status === 'active' ? 'success' : 'neutral'} className="capitalize">
+          {row.status}
+        </Badge>
+      ),
+    },
+    {
+      id: 'account',
+      header: 'Account',
+      cell: (row) =>
+        row.user ? <AccountStatusBadge status={row.user.status} /> : <Badge>Unknown</Badge>,
+    },
+    {
+      id: 'actions',
+      header: '',
+      className: 'text-right',
+      cell: (row) =>
+        row.user ? (
+          <div className="flex justify-end">
+            <AccountActions
+              userId={row.user.id}
+              fullName={row.user.full_name}
+              email={row.user.email}
+              status={row.user.status}
+            />
+          </div>
+        ) : null,
+    },
+  ];
+
+  const isFiltered = debouncedSearch !== '' || classId !== '' || status !== '';
 
   return (
     <div className="space-y-6">
@@ -49,136 +157,107 @@ export default function AdminStudentsPage() {
             ? `${formatNumber(query.data.total)} students on roll`
             : 'Admissions, enrolment and student records.'
         }
+        actions={
+          <Button
+            onClick={() => {
+              setCreating(true);
+            }}
+          >
+            <Plus className="size-4" aria-hidden />
+            Admit student
+          </Button>
+        }
       />
 
-      <div className="relative max-w-sm">
-        <Search
-          className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-3"
-          aria-hidden
-        />
-        <Input
-          value={search}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            setPage(1);
-          }}
-          placeholder="Search by name or admission number"
-          className="pl-10"
-          aria-label="Search students"
-        />
-      </div>
-
-      <Card className="overflow-hidden p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border">
-                {['Student', 'Admission no.', 'Class', 'Admitted', 'Status'].map((heading) => (
-                  <th
-                    key={heading}
-                    scope="col"
-                    className="px-4 py-3 text-left text-[10.5px] font-bold tracking-wider text-ink-3 uppercase"
-                  >
-                    {heading}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-border">
-              {query.isPending
-                ? Array.from({ length: 8 }, (_, index) => (
-                    <tr key={index}>
-                      <td colSpan={5} className="px-4 py-3">
-                        <Skeleton className="h-8 w-full" />
-                      </td>
-                    </tr>
-                  ))
-                : rows.map((student) => (
-                    <tr key={student.id} className="transition-colors hover:bg-surface-2/60">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <UserAvatar
-                            fullName={student.user?.full_name}
-                            avatarPath={student.user?.avatar_path}
-                          />
-                          <div className="min-w-0">
-                            <p className="truncate font-semibold text-ink">
-                              {student.user?.full_name ?? '—'}
-                            </p>
-                            <p className="truncate text-[12px] text-ink-3">
-                              {student.user?.email ?? '—'}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 font-mono text-[12.5px] whitespace-nowrap text-ink-2">
-                        {student.admission_number}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-ink-2">
-                        {student.current_class
-                          ? formatClassName(student.current_class.name, student.current_class.arm)
-                          : '—'}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-ink-3">
-                        {formatDate(student.admission_date)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant={student.status === 'active' ? 'success' : 'neutral'}>
-                          {student.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-            </tbody>
-          </table>
-        </div>
-
-        {!query.isPending && rows.length === 0 ? (
-          <EmptyState
-            icon={GraduationCap}
-            title="No students found"
-            description={
-              debouncedSearch
-                ? `Nothing matches “${debouncedSearch}”.`
-                : 'No students have been admitted yet.'
-            }
-            className="m-4 border-0"
-          />
-        ) : null}
-      </Card>
-
-      {query.data && query.data.pageCount > 1 ? (
-        <div className="flex items-center justify-between">
-          <p className="text-[13px] text-ink-3">
-            Page {query.data.page} of {query.data.pageCount}
-          </p>
-          <div className="flex gap-2">
+      <DataTable
+        rows={query.data?.rows ?? []}
+        columns={columns}
+        rowKey={(row) => row.id}
+        isLoading={query.isPending}
+        error={query.error}
+        empty={{
+          icon: GraduationCap,
+          title: isFiltered ? 'No students match' : 'No students yet',
+          description: isFiltered
+            ? 'Nothing matches those filters.'
+            : 'Admit your first student to start building the roll.',
+          action: isFiltered ? undefined : (
             <Button
-              variant="secondary"
-              size="sm"
-              disabled={page <= 1}
               onClick={() => {
-                setPage((current) => Math.max(1, current - 1));
+                setCreating(true);
               }}
             >
-              <ChevronLeft className="size-4" aria-hidden />
-              Previous
+              <Plus className="size-4" aria-hidden />
+              Admit student
             </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={page >= query.data.pageCount}
-              onClick={() => {
-                setPage((current) => current + 1);
+          ),
+        }}
+        pagination={
+          query.data
+            ? {
+                page: query.data.page,
+                pageCount: query.data.pageCount,
+                total: query.data.total,
+                onPageChange: setPage,
+              }
+            : undefined
+        }
+        toolbar={
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative min-w-[16rem] flex-1 sm:max-w-sm">
+              <Search
+                className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-3"
+                aria-hidden
+              />
+              <Input
+                value={search}
+                onChange={(event) => {
+                  resetTo(() => {
+                    setSearch(event.target.value);
+                  });
+                }}
+                placeholder="Search by name, email or admission number"
+                className="pl-10"
+                aria-label="Search students"
+              />
+            </div>
+
+            <Select
+              value={classId}
+              onChange={(event) => {
+                resetTo(() => {
+                  setClassId(event.target.value);
+                });
               }}
-            >
-              Next
-              <ChevronRight className="size-4" aria-hidden />
-            </Button>
+              placeholder="All classes"
+              className="w-auto"
+              aria-label="Filter by class"
+              options={[
+                { value: '', label: 'All classes' },
+                ...(classes.data ?? []).map((row) => ({
+                  value: row.id,
+                  label: formatClassName(row.name, row.arm),
+                })),
+              ]}
+            />
+
+            <Select
+              value={status}
+              onChange={(event) => {
+                resetTo(() => {
+                  setStatus(event.target.value);
+                });
+              }}
+              placeholder="Any enrolment status"
+              className="w-auto"
+              aria-label="Filter by enrolment status"
+              options={[{ value: '', label: 'Any enrolment status' }, ...ENROLMENT_STATUSES]}
+            />
           </div>
-        </div>
-      ) : null}
+        }
+      />
+
+      <NewUserDialog open={creating} onOpenChange={setCreating} role="student" />
     </div>
   );
 }

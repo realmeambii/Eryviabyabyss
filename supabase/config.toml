@@ -130,6 +130,13 @@ redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"
 [functions.send-notification-email]
 verify_jwt = true
 
+# Account provisioning. The gateway rejects an unsigned request before the
+# function runs; the function then re-checks the caller's administrator grant
+# against `user_roles`, because a role claim in a token is only as fresh as the
+# token.
+[functions.admin-users]
+verify_jwt = true
+
 # Invoked by a scheduler, not by a signed-in user, so it authenticates with the
 # FUNCTION_CRON_SECRET header instead of a JWT.
 [functions.daily-reminders]

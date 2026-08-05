@@ -14,7 +14,7 @@ the system from the ground up.
 | `0200_enums` | 22 domain enums |
 | `0300_core_tables` | `schools`, `roles`, `users`, `user_roles`, `academic_sessions` |
 | `0400_people_and_structure` | `subjects`, `teachers`, `classes`, `students`, `parents`, `parent_students`, `class_subjects`, `enrollments`, `teacher_assignments` |
-| `0500_lessons_timetable_attendance` | `lessons`, `timetable_slots`, `attendance_records` |
+| `0500_lessons_timetable_attendance` | `lessons`, `timetable_slots` (the migration also created `attendance_records`, dropped in `20260805000300_remove_attendance`) |
 | `0600_assessments` | `assignments`, `assignment_submissions`, `quizzes`, `quiz_questions`, `quiz_attempts`, `grades` |
 | `0700_communication_and_audit` | `announcements`, `notifications`, `files`, `audit_logs` |
 | `0800_functions_and_triggers` | Business rules: lateness, grade banding, gradebook sync, notification fan-out, audit trail |
@@ -199,7 +199,6 @@ index or an `EXCLUDE`, it is one. Examples in the schema:
 - `announcements`: the target column matching the audience
 - `quiz_questions`: objective questions must ship options *and* an answer key
 - `grades`: `score <= max_score`
-- `attendance_records`: `minutes_late` only on a `late` row
 
 **Indexes** cover the foreign keys RLS traverses and the queries the UI runs.
 Several are partial or covering where that removes a heap fetch from a hot
@@ -261,7 +260,7 @@ from a reader of the other. So students have **no SELECT policy on that table
 at all**, and receive the paper through a SECURITY DEFINER function that strips
 the key.
 
-Everything else — assignments, grades, attendance — is plain table access under
+Everything else — assignments, grades, lessons — is plain table access under
 RLS. Wrapping those in RPCs would only move the security boundary somewhere
 harder to audit.
 
@@ -298,7 +297,7 @@ the bytes are protected independently by the `storage.objects` policies.
 1 school · 3 terms · 20 subjects · 10 classes · 5 administrators · 20 teachers ·
 200 students · 150 parents · ~90 class-subjects · ~300 timetable slots ·
 ~80 assignments · ~800 graded submissions · 20 quizzes · ~150 attempts ·
-~2 000 attendance records · 8 announcements.
+8 announcements.
 
 Password for every account: `Password123!`
 

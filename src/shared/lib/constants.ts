@@ -77,6 +77,13 @@ export const UPLOAD_LIMITS = {
     accept: '.pdf,.doc,.docx,.pptx,.md,.txt,image/*,video/mp4,video/webm,audio/*',
   },
   'student-documents': { maxBytes: 15 * 1024 * 1024, accept: '.pdf,image/jpeg,image/png' },
+  'message-attachments': {
+    maxBytes: 15 * 1024 * 1024,
+    accept: '.pdf,.doc,.docx,.xlsx,.pptx,.txt,.csv,image/jpeg,image/png,image/webp',
+  },
+  // Keyed by the `storage_bucket` enum: adding a bucket without an entry here
+  // is a type error rather than a runtime `undefined.maxBytes`, which is the
+  // reason this map is exhaustive rather than a lookup with a default.
 } as const;
 
 /** How long a signed download URL stays valid. */

@@ -1,6 +1,6 @@
 import { toAppError } from '@/shared/lib/errors';
 import { supabase } from '@/shared/lib/supabase';
-import type { Student, StudentStatus } from '@/shared/types';
+import type { Student, StudentStatus, UserStatus } from '@/shared/types';
 
 /**
  * Administrator data access.
@@ -68,6 +68,13 @@ export interface StudentRow {
     email: string;
     avatar_path: string | null;
     phone: string | null;
+    /**
+     * Whether the *login* works — a different question from `status` above,
+     * which is where the pupil stands with the school. A graduated student may
+     * still sign in to collect results; a suspended account belongs to someone
+     * who is very much still on the roll.
+     */
+    status: UserStatus;
   } | null;
   current_class: { id: string; name: string; arm: string } | null;
 }
@@ -136,6 +143,7 @@ export async function listStudents({
       email: row.email,
       avatar_path: row.avatar_path,
       phone: row.phone,
+      status: row.user_status,
     },
     current_class: row.current_class_id
       ? { id: row.current_class_id, name: row.class_name ?? '', arm: row.class_arm ?? '' }

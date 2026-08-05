@@ -36,7 +36,7 @@ Two practical consequences shape the whole codebase:
 │  layouts/         auth shell · app shell (sidebar + topbar)  │
 ├──────────────────────────────────────────────────────────────┤
 │  features/        auth · admin · teacher · student · parent  │
-│                   assignments · quizzes · attendance         │
+│                   assignments · quizzes · lessons            │
 │                   grades · timetable · notifications         │
 │                                                              │
 │    each: api/ hooks/ components/ pages/ schemas/ index.ts    │

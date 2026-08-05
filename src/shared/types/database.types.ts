@@ -198,6 +198,7 @@ export type Database = {
           lesson_id: string | null;
           max_attempts: number;
           max_score: number;
+          rubric: Json | null;
           published_at: string | null;
           school_id: string;
           status: Database['public']['Enums']['publication_status'];
@@ -223,6 +224,7 @@ export type Database = {
           lesson_id?: string | null;
           max_attempts?: number;
           max_score?: number;
+          rubric?: Json | null;
           published_at?: string | null;
           school_id: string;
           status?: Database['public']['Enums']['publication_status'];
@@ -248,6 +250,7 @@ export type Database = {
           lesson_id?: string | null;
           max_attempts?: number;
           max_score?: number;
+          rubric?: Json | null;
           published_at?: string | null;
           school_id?: string;
           status?: Database['public']['Enums']['publication_status'];
@@ -255,58 +258,6 @@ export type Database = {
           title?: string;
           updated_at?: string;
           weight?: number;
-        };
-        Relationships: [];
-      };
-
-      attendance_records: {
-        Row: {
-          academic_session_id: string;
-          class_id: string;
-          created_at: string;
-          id: string;
-          minutes_late: number | null;
-          note: string | null;
-          recorded_at: string;
-          recorded_by: string | null;
-          school_id: string;
-          status: Database['public']['Enums']['attendance_status'];
-          student_id: string;
-          subject_id: string | null;
-          taken_on: string;
-          updated_at: string;
-        };
-        Insert: {
-          academic_session_id: string;
-          class_id: string;
-          created_at?: string;
-          id?: string;
-          minutes_late?: number | null;
-          note?: string | null;
-          recorded_at?: string;
-          recorded_by?: string | null;
-          school_id: string;
-          status?: Database['public']['Enums']['attendance_status'];
-          student_id: string;
-          subject_id?: string | null;
-          taken_on?: string;
-          updated_at?: string;
-        };
-        Update: {
-          academic_session_id?: string;
-          class_id?: string;
-          created_at?: string;
-          id?: string;
-          minutes_late?: number | null;
-          note?: string | null;
-          recorded_at?: string;
-          recorded_by?: string | null;
-          school_id?: string;
-          status?: Database['public']['Enums']['attendance_status'];
-          student_id?: string;
-          subject_id?: string | null;
-          taken_on?: string;
-          updated_at?: string;
         };
         Relationships: [];
       };
@@ -442,6 +393,74 @@ export type Database = {
           room?: string | null;
           school_id?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      conversations: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          last_message_at: string;
+          school_id: string;
+          subject: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          last_message_at?: string;
+          school_id: string;
+          subject?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          last_message_at?: string;
+          school_id?: string;
+          subject?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      conversation_participants: {
+        Row: {
+          conversation_id: string;
+          created_at: string;
+          id: string;
+          is_muted: boolean;
+          joined_at: string;
+          last_read_at: string;
+          school_id: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          conversation_id: string;
+          created_at?: string;
+          id?: string;
+          is_muted?: boolean;
+          joined_at?: string;
+          last_read_at?: string;
+          school_id: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          conversation_id?: string;
+          created_at?: string;
+          id?: string;
+          is_muted?: boolean;
+          joined_at?: string;
+          last_read_at?: string;
+          school_id?: string;
+          updated_at?: string;
+          user_id?: string;
         };
         Relationships: [];
       };
@@ -619,6 +638,7 @@ export type Database = {
       lessons: {
         Row: {
           academic_session_id: string;
+          available_from: string | null;
           class_id: string;
           content: string | null;
           content_type: Database['public']['Enums']['lesson_content_type'];
@@ -627,6 +647,7 @@ export type Database = {
           duration_minutes: number | null;
           external_url: string | null;
           id: string;
+          objectives: string[] | null;
           sort_order: number;
           published_at: string | null;
           school_id: string;
@@ -639,6 +660,7 @@ export type Database = {
         };
         Insert: {
           academic_session_id: string;
+          available_from?: string | null;
           class_id: string;
           content?: string | null;
           content_type?: Database['public']['Enums']['lesson_content_type'];
@@ -647,6 +669,7 @@ export type Database = {
           duration_minutes?: number | null;
           external_url?: string | null;
           id?: string;
+          objectives?: string[] | null;
           sort_order?: number;
           published_at?: string | null;
           school_id: string;
@@ -659,6 +682,7 @@ export type Database = {
         };
         Update: {
           academic_session_id?: string;
+          available_from?: string | null;
           class_id?: string;
           content?: string | null;
           content_type?: Database['public']['Enums']['lesson_content_type'];
@@ -667,6 +691,7 @@ export type Database = {
           duration_minutes?: number | null;
           external_url?: string | null;
           id?: string;
+          objectives?: string[] | null;
           sort_order?: number;
           published_at?: string | null;
           school_id?: string;
@@ -676,6 +701,40 @@ export type Database = {
           title?: string;
           updated_at?: string;
           week_number?: number | null;
+        };
+        Relationships: [];
+      };
+
+      messages: {
+        Row: {
+          body: string;
+          conversation_id: string;
+          created_at: string;
+          deleted_at: string | null;
+          edited_at: string | null;
+          id: string;
+          school_id: string;
+          sender_id: string | null;
+        };
+        Insert: {
+          body: string;
+          conversation_id: string;
+          created_at?: string;
+          deleted_at?: string | null;
+          edited_at?: string | null;
+          id?: string;
+          school_id: string;
+          sender_id?: string | null;
+        };
+        Update: {
+          body?: string;
+          conversation_id?: string;
+          created_at?: string;
+          deleted_at?: string | null;
+          edited_at?: string | null;
+          id?: string;
+          school_id?: string;
+          sender_id?: string | null;
         };
         Relationships: [];
       };
@@ -802,6 +861,58 @@ export type Database = {
           school_id?: string;
           updated_at?: string;
           user_id?: string;
+        };
+        Relationships: [];
+      };
+
+      question_bank_items: {
+        Row: {
+          correct_answers: Json | null;
+          created_at: string;
+          created_by: string | null;
+          explanation: string | null;
+          id: string;
+          level: number | null;
+          options: Json | null;
+          points: number;
+          prompt: string;
+          question_type: Database['public']['Enums']['question_type'];
+          school_id: string;
+          subject_id: string;
+          tags: string[];
+          updated_at: string;
+        };
+        Insert: {
+          correct_answers?: Json | null;
+          created_at?: string;
+          created_by?: string | null;
+          explanation?: string | null;
+          id?: string;
+          level?: number | null;
+          options?: Json | null;
+          points?: number;
+          prompt: string;
+          question_type?: Database['public']['Enums']['question_type'];
+          school_id: string;
+          subject_id: string;
+          tags?: string[];
+          updated_at?: string;
+        };
+        Update: {
+          correct_answers?: Json | null;
+          created_at?: string;
+          created_by?: string | null;
+          explanation?: string | null;
+          id?: string;
+          level?: number | null;
+          options?: Json | null;
+          points?: number;
+          prompt?: string;
+          question_type?: Database['public']['Enums']['question_type'];
+          school_id?: string;
+          subject_id?: string;
+          tags?: string[];
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -1106,6 +1217,43 @@ export type Database = {
           timezone?: string;
           updated_at?: string;
           website?: string | null;
+        };
+        Relationships: [];
+      };
+
+      student_notes: {
+        Row: {
+          body: string;
+          created_at: string;
+          id: string;
+          is_private: boolean;
+          school_id: string;
+          student_id: string;
+          subject_id: string | null;
+          teacher_id: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          body: string;
+          created_at?: string;
+          id?: string;
+          is_private?: boolean;
+          school_id: string;
+          student_id: string;
+          subject_id?: string | null;
+          teacher_id?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+          id?: string;
+          is_private?: boolean;
+          school_id?: string;
+          student_id?: string;
+          subject_id?: string | null;
+          teacher_id?: string | null;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -1475,6 +1623,10 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: number;
       };
+      provision_user_role: {
+        Args: { p_user_id: string; p_role: string; p_school_id: string };
+        Returns: undefined;
+      };
       search_students: {
         Args: {
           p_query?: string | undefined;
@@ -1494,6 +1646,7 @@ export type Database = {
           email: string;
           avatar_path: string | null;
           phone: string | null;
+          user_status: Database['public']['Enums']['user_status'];
           class_name: string | null;
           class_arm: string | null;
           total_count: number;
@@ -1522,7 +1675,6 @@ export type Database = {
         | 'project'
         | 'exam';
       attempt_status: 'in_progress' | 'submitted' | 'graded' | 'abandoned' | 'expired';
-      attendance_status: 'present' | 'absent' | 'late' | 'excused';
       audit_action:
         | 'insert'
         | 'update'
@@ -1547,7 +1699,6 @@ export type Database = {
         | 'quiz_graded'
         | 'grade_posted'
         | 'announcement'
-        | 'attendance_flagged'
         | 'timetable_changed'
         | 'account'
         | 'system';
@@ -1557,8 +1708,11 @@ export type Database = {
         | 'multiple_select'
         | 'true_false'
         | 'short_answer'
-        | 'essay';
+        | 'essay'
+        | 'fill_blank'
+        | 'matching';
       storage_bucket:
+        | 'message-attachments'
         | 'profile-photos'
         | 'assignment-uploads'
         | 'lesson-materials'

@@ -9,7 +9,7 @@
 --      3 terms             ~90 class-subjects  ~300 timetable slots
 --      ~80 assignments     ~800 graded submissions (→ gradebook rows)
 --      20 quizzes          ~150 attempts
---      8 announcements     ~2 000 attendance records
+--      8 announcements
 --
 --  Every account signs in with:  Password123!
 --
@@ -754,45 +754,7 @@ join public.enrollments e
 where (e.roll_number * 11) % 20 < 15;
 
 -- ═══════════════════════════════════════════════════════════════════════════
---  12 · Attendance — the last ten school days
--- ═══════════════════════════════════════════════════════════════════════════
-
-insert into public.attendance_records (
-  school_id, student_id, class_id, academic_session_id,
-  taken_on, status, minutes_late, recorded_by
-)
-select
-  '10000000-0000-4000-8000-000000000001'::uuid,
-  e.student_id,
-  e.class_id,
-  e.academic_session_id,
-  d.day::date,
-  st.status,
-  case when st.status = 'late' then (5 + ((e.roll_number * 3) % 20))::smallint else null end,
-  c.form_teacher_id
-from public.enrollments e
-join public.classes c on c.id = e.class_id
-cross join lateral (
-  -- Ten weekdays ending yesterday.
-  select day
-    from generate_series(current_date - 20, current_date - 1, interval '1 day') as day
-   where extract(isodow from day) <= 5
-   order by day desc
-   limit 10
-) d
-cross join lateral (
-  select case
-           when (e.roll_number * 7 + extract(day from d.day)::int) % 25 = 0 then 'absent'
-           when (e.roll_number * 7 + extract(day from d.day)::int) % 13 = 0 then 'late'
-           when (e.roll_number * 7 + extract(day from d.day)::int) % 31 = 0 then 'excused'
-           else 'present'
-         end::public.attendance_status as status
-) st
-where e.status = 'active'
-on conflict do nothing;
-
--- ═══════════════════════════════════════════════════════════════════════════
---  13 · Announcements
+--  12 · Announcements
 -- ═══════════════════════════════════════════════════════════════════════════
 
 insert into public.announcements (
@@ -869,7 +831,7 @@ cross join (
 where c.code in ('JSS1A', 'JSS2A', 'SS1A');
 
 -- ═══════════════════════════════════════════════════════════════════════════
---  14 · Summary
+--  13 · Summary
 -- ═══════════════════════════════════════════════════════════════════════════
 
 do $$
@@ -894,7 +856,6 @@ begin
     (select count(*) from public.quiz_questions)         as quiz_questions,
     (select count(*) from public.quiz_attempts)          as quiz_attempts,
     (select count(*) from public.grades)                 as grades,
-    (select count(*) from public.attendance_records)     as attendance,
     (select count(*) from public.announcements)          as announcements,
     (select count(*) from public.notifications)          as notifications,
     (select count(*) from public.audit_logs)             as audit_logs
@@ -913,8 +874,8 @@ begin
     r.assignments, r.submissions, r.grades;
   raise notice '  quizzes % · questions % · attempts %',
     r.quizzes, r.quiz_questions, r.quiz_attempts;
-  raise notice '  attendance % · announcements % · notifications % · audit_logs %',
-    r.attendance, r.announcements, r.notifications, r.audit_logs;
+  raise notice '  announcements % · notifications % · audit_logs %',
+    r.announcements, r.notifications, r.audit_logs;
   raise notice '  ─────────────────────────────────────────────────────────────';
   raise notice '  Sign in with password  Password123!';
   raise notice '    admin@gnaschools.edu.ng     — administrator';

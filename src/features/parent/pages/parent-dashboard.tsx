@@ -1,4 +1,4 @@
-import { CalendarDays, FileSpreadsheet, ScrollText, UsersRound } from 'lucide-react';
+import { CalendarDays, FileSpreadsheet, UsersRound } from 'lucide-react';
 
 import { useCurrentUser } from '@/features/auth';
 import { EmptyState } from '@/shared/components/empty-state';
@@ -22,12 +22,6 @@ const SHORTCUTS: Shortcut[] = [
     icon: FileSpreadsheet,
     title: 'Results',
     description: 'Continuous assessment and end-of-term reports.',
-  },
-  {
-    to: '/parent/attendance',
-    icon: ScrollText,
-    title: 'Attendance',
-    description: 'Days present, late and absent this term.',
   },
   {
     to: '/parent/timetable',

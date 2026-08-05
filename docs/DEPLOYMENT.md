@@ -93,9 +93,19 @@ Upload the three templates from `supabase/templates/`.
 
 ```bash
 npx supabase secrets set --env-file ./supabase/functions/.env
+npx supabase functions deploy admin-users
 npx supabase functions deploy send-notification-email
 npx supabase functions deploy daily-reminders
 ```
+
+`admin-users` backs the whole administrator people section — admitting students,
+adding staff and guardians, password resets, deactivation. Until it is deployed
+those screens read fine and every write returns a network error, so deploy it
+before handing the portal to a school.
+
+Without `RESEND_API_KEY` the function still works: welcome emails are skipped
+and the emailed-link reset returns a clear "outbound email is not configured"
+rather than failing silently. The temporary-password route is unaffected.
 
 `ALLOWED_ORIGINS` and `APP_URL` must name the production domain.
 `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` are

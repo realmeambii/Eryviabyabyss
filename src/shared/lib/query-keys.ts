@@ -38,6 +38,9 @@ export const queryKeys = {
       [...queryKeys.students.all, 'list', filters ?? {}] as const,
     detail: (studentId: string) => [...queryKeys.students.all, 'detail', studentId] as const,
     byClass: (classId: string) => [...queryKeys.students.all, 'class', classId] as const,
+    /** The student's active enrolment for a term — the root of every student screen. */
+    enrollment: (studentId: string, sessionId: string) =>
+      [...queryKeys.students.all, studentId, 'enrollment', sessionId] as const,
   },
 
   teachers: {
@@ -45,6 +48,21 @@ export const queryKeys = {
     list: (filters?: Record<string, unknown>) =>
       [...queryKeys.teachers.all, 'list', filters ?? {}] as const,
     detail: (teacherId: string) => [...queryKeys.teachers.all, 'detail', teacherId] as const,
+    /**
+     * The (class, subject) pairings assigned to a teacher for a term. Every
+     * other teacher query is scoped by what this returns, so it gets its own
+     * key rather than riding on `list`.
+     */
+    scope: (teacherId: string, sessionId: string | null) =>
+      [...queryKeys.teachers.all, teacherId, 'scope', sessionId] as const,
+    workload: (teacherId: string, sessionId: string | null) =>
+      [...queryKeys.teachers.all, teacherId, 'workload', sessionId] as const,
+    roster: (classId: string, sessionId: string) =>
+      [...queryKeys.teachers.all, 'roster', classId, sessionId] as const,
+    classStats: (classId: string, sessionId: string) =>
+      [...queryKeys.teachers.all, 'class-stats', classId, sessionId] as const,
+    markingQueue: (filters?: Record<string, unknown>) =>
+      [...queryKeys.teachers.all, 'marking-queue', filters ?? {}] as const,
   },
 
   parents: {
@@ -69,6 +87,8 @@ export const queryKeys = {
 
   lessons: {
     all: ['lessons'] as const,
+    list: (filters?: Record<string, unknown>) =>
+      [...queryKeys.lessons.all, 'list', filters ?? {}] as const,
     byClassSubject: (classId: string, subjectId: string) =>
       [...queryKeys.lessons.all, classId, subjectId] as const,
     detail: (lessonId: string) => [...queryKeys.lessons.all, 'detail', lessonId] as const,
@@ -103,16 +123,6 @@ export const queryKeys = {
       [...queryKeys.grades.all, 'student', studentId, sessionId ?? null] as const,
     forClass: (classId: string, subjectId?: string) =>
       [...queryKeys.grades.all, 'class', classId, subjectId ?? null] as const,
-  },
-
-  attendance: {
-    all: ['attendance'] as const,
-    forStudent: (studentId: string, range?: string) =>
-      [...queryKeys.attendance.all, 'student', studentId, range ?? null] as const,
-    register: (classId: string, date: string) =>
-      [...queryKeys.attendance.all, 'register', classId, date] as const,
-    summary: (classId: string, sessionId: string) =>
-      [...queryKeys.attendance.all, 'summary', classId, sessionId] as const,
   },
 
   timetable: {

@@ -12,7 +12,6 @@ export default function ParentChildrenPage() {
         'Child switcher across siblings',
         'Class, form teacher and subject teachers',
         'Assignment and result history',
-        'Attendance summary with absence reasons',
         'Direct message to the form teacher',
       ]}
       dataLayer={['parent_students', 'app.is_my_child()', 'app.my_children()']}
