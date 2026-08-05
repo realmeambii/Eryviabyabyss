@@ -43,6 +43,28 @@ jobs:
           VITE_APP_ENV: local
           VITE_APP_URL: http://localhost:5173
 
+  functions:
+    name: Edge Function type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # Nothing else in CI looks at `supabase/functions`. ESLint ignores the
+      # directory on purpose — it is Deno, not the browser bundle, and shares
+      # none of the frontend's tsconfig — and `npm run build` never reaches it.
+      # Without this step a function that does not compile is caught only by the
+      # deploy at the end of `migrate`, or by a 500 in production.
+      #
+      # `deno fmt --check` and `deno lint` are deliberately not run yet: both
+      # currently fail (formatting drift, and the inline `jsr:` specifier in
+      # `_shared/supabase.ts` that `no-import-prefix` objects to).
+      - name: Type check
+        run: deno check -c supabase/functions/deno.json supabase/functions/*/index.ts
+
   database:
     name: Migrations and seed
     runs-on: ubuntu-latest
@@ -85,7 +107,7 @@ jobs:
 
   migrate:
     name: Deploy migrations
-    needs: [verify, database]
+    needs: [verify, functions, database]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: production

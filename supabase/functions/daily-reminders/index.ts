@@ -43,6 +43,23 @@ interface DueAssignment {
   due_at: string;
 }
 
+/**
+ * A row of `enrollments` with its student embedded.
+ *
+ * `students` is a single object, not an array: `enrollments` holds the foreign
+ * key, so `students!inner(user_id)` is a many-to-one embed and PostgREST
+ * returns one object per row.
+ *
+ * The cast onto this shape has to launder through `unknown`. `adminClient()` is
+ * deliberately untyped — no `Database` generic — so supabase-js has no
+ * relationship metadata to infer cardinality from and falls back to typing every
+ * embed as an array. The array is the type system guessing, not the wire.
+ */
+interface EnrolledStudent {
+  student_id: string;
+  students: { user_id: string };
+}
+
 Deno.serve(async (request: Request) => {
   const preflight = handlePreflight(request);
   if (preflight) return preflight;
@@ -98,10 +115,9 @@ Deno.serve(async (request: Request) => {
 
     const submittedIds = new Set((submitted ?? []).map((row) => row.student_id as string));
 
-    const outstanding = enrolled.filter((row) => !submittedIds.has(row.student_id as string)) as {
-      student_id: string;
-      students: { user_id: string };
-    }[];
+    const outstanding = enrolled.filter(
+      (row) => !submittedIds.has(row.student_id as string),
+    ) as unknown as EnrolledStudent[];
 
     if (outstanding.length === 0) continue;
 
