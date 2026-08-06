@@ -4,31 +4,28 @@ import { useAuth } from '@/features/auth';
 import { ModulePlaceholder } from '@/shared/components/module-placeholder';
 
 import StudentAssignmentsPage from './student-assignments-page';
+import TeacherAssignmentsPage from './teacher-assignments-page';
 
 /**
  * `/…/assignments` is a shared route across all four portals, so this dispatches
  * on role rather than duplicating the path four times in the router.
  *
- * Only the student view is implemented. Teacher and parent keep their
- * placeholder until their phase, which is honest about what exists rather than
- * showing them a student's list with the wrong data in it.
+ * Student and teacher views are implemented. Parent keeps its placeholder
+ * until that phase, which is honest about what exists rather than showing a
+ * guardian a teacher's marking board.
  */
 export default function AssignmentsPage() {
-  const { isStudent } = useAuth();
+  const { isStudent, isTeacher } = useAuth();
 
   if (isStudent) return <StudentAssignmentsPage />;
+  if (isTeacher) return <TeacherAssignmentsPage />;
 
   return (
     <ModulePlaceholder
       icon={ClipboardList}
       title="Assignments"
       description="Set work, collect submissions and return marks."
-      planned={[
-        'Teacher: create and publish assignments to a class',
-        'Teacher: submission tracker with who has and has not handed in',
-        'Teacher: inline marking with feedback',
-        'Parent: read-only view of a child’s work and results',
-      ]}
+      planned={['Parent: read-only view of a child’s work and results']}
       dataLayer={[
         'assignments',
         'assignment_submissions',
