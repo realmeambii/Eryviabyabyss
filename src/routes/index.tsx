@@ -57,6 +57,7 @@ const TeacherSubjectPage = lazy(() => import('@/features/teacher/pages/teacher-s
 const TeacherAssignmentPage = lazy(
   () => import('@/features/assignments/pages/teacher-assignment-page'),
 );
+const StudentQuizPage = lazy(() => import('@/features/quizzes/pages/student-quiz-page'));
 const TeacherQuizPage = lazy(() => import('@/features/quizzes/pages/teacher-quiz-page'));
 const TeacherStudentPage = lazy(() => import('@/features/teacher/pages/teacher-student-page'));
 const TeacherLessonsPage = lazy(() => import('@/features/lessons/pages/teacher-lessons-page'));
@@ -151,6 +152,7 @@ export function AppRoutes() {
                 <Route path="subjects/:subjectId" element={<StudentCoursePage />} />
                 <Route path="assignments/:assignmentId" element={<StudentAssignmentDetailPage />} />
                 <Route path="quizzes" element={<QuizzesPage />} />
+                <Route path="quizzes/:quizId" element={<StudentQuizPage />} />
               </>,
             )}
 

@@ -132,13 +132,21 @@ export interface UserContext {
   unread_notifications: number;
 }
 
-/** A quiz question as a student receives it — no answer key. */
+/**
+ * A quiz question as a candidate receives it.
+ *
+ * No `correct_answers`, and no `match` on an option — `get_quiz_paper()` strips
+ * it, because the matching shape stores the answer there. The right-hand items
+ * arrive in `match_pool`, shuffled independently so their order carries no hint.
+ */
 export interface QuizPaperQuestion {
   id: string;
   sort_order: number;
   question_type: QuestionType;
   prompt: string;
   options: { id: string; label: string }[] | null;
+  /** Matching only: every right-hand item, shuffled. */
+  match_pool: string[] | null;
   points: number;
   media_path: string | null;
 }

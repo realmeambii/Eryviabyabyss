@@ -1615,6 +1615,7 @@ export type Database = {
           question_type: Database['public']['Enums']['question_type'];
           prompt: string;
           options: Json | null;
+          match_pool: Json | null;
           points: number;
           media_path: string | null;
         }[];

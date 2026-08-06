@@ -52,10 +52,22 @@ export {
   type ChoiceOption,
 } from './lib/question-shapes';
 
+export {
+  useAnswerDraft,
+  useCountdown,
+  useMyQuizAttempts,
+  useQuizPaper,
+  useStartAttempt,
+  useSubmitAttempt,
+} from './hooks/use-sit-quiz';
+
+export { QuestionPaper } from './components/question-paper';
 export { QuestionBankDialog } from './components/question-bank-dialog';
 export { QuestionEditorDialog } from './components/question-editor-dialog';
 export { QuizEditorDialog } from './components/quiz-editor-dialog';
 
 export { default as QuizzesPage } from './pages/quizzes-page';
+export { default as StudentQuizzesPage } from './pages/student-quizzes-page';
+export { default as StudentQuizPage } from './pages/student-quiz-page';
 export { default as TeacherQuizzesPage } from './pages/teacher-quizzes-page';
 export { default as TeacherQuizPage } from './pages/teacher-quiz-page';
