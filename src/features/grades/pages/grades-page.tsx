@@ -4,12 +4,14 @@ import { useAuth } from '@/features/auth';
 import { ModulePlaceholder } from '@/shared/components/module-placeholder';
 
 import StudentGradesPage from './student-grades-page';
+import TeacherGradebookPage from './teacher-gradebook-page';
 
-/** Shared `/…/grades` route. Student view is live; other roles land in their phase. */
+/** Shared `/…/grades` route. Student and teacher views are live. */
 export default function GradesPage() {
-  const { isStudent } = useAuth();
+  const { isStudent, isTeacher } = useAuth();
 
   if (isStudent) return <StudentGradesPage />;
+  if (isTeacher) return <TeacherGradebookPage />;
 
   return (
     <ModulePlaceholder
@@ -17,8 +19,6 @@ export default function GradesPage() {
       title="Gradebook"
       description="Continuous assessment, tests and exams, banded against the school's scale."
       planned={[
-        'Teacher: mark entry with class distribution',
-        'Teacher: publish or withhold results per assessment',
         'Parent: results across all their children',
         'Administrator: year-group and subject analysis',
         'Printable end-of-term report cards',
