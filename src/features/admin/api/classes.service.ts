@@ -162,3 +162,115 @@ export async function setClassSubjects(args: {
     if (error) throw toAppError(error);
   }
 }
+
+// ── Who teaches what ────────────────────────────────────────────────────────
+//  `teacher_assignments` is the row that makes a teacher's portal work at all.
+//  Without one they sign in to an empty dashboard: `app.teaches_class()` and
+//  `app.teaches_class_subject()` sit in the USING clause of every teacher
+//  policy, so an unassigned teacher can see nothing and author nothing.
+
+export interface ClassTeaching {
+  id: string;
+  class_id: string;
+  subject_id: string;
+  is_lead: boolean;
+  teacher: {
+    id: string;
+    staff_number: string;
+    user: { full_name: string } | null;
+  } | null;
+  subject: { id: string; name: string; code: string; color: string } | null;
+}
+
+export async function listClassTeaching(
+  classId: string,
+  sessionId: string,
+): Promise<ClassTeaching[]> {
+  const { data, error } = await supabase
+    .from('teacher_assignments')
+    .select(
+      `id, class_id, subject_id, is_lead,
+       teacher:teachers!teacher_assignments_teacher_id_fkey (
+         id, staff_number, user:users!teachers_user_id_fkey (full_name)
+       ),
+       subject:subjects!teacher_assignments_subject_id_fkey (id, name, code, color)`,
+    )
+    .eq('class_id', classId)
+    .eq('academic_session_id', sessionId);
+
+  if (error) throw toAppError(error);
+  return data as unknown as ClassTeaching[];
+}
+
+/**
+ * Put a teacher against a class and subject.
+ *
+ * `is_lead` defaults to true because the common case is one teacher owning the
+ * pairing. `teacher_assignments_one_lead` is a partial unique index over
+ * (class, subject, term) where `is_lead`, so a second lead for the same pairing
+ * comes back as 23505 — "That record already exists" — rather than silently
+ * creating two people who both own the final grade.
+ */
+export async function assignTeacher(input: {
+  schoolId: string;
+  teacherId: string;
+  classId: string;
+  subjectId: string;
+  sessionId: string;
+  isLead?: boolean;
+}): Promise<void> {
+  const { error } = await supabase.from('teacher_assignments').insert({
+    school_id: input.schoolId,
+    teacher_id: input.teacherId,
+    class_id: input.classId,
+    subject_id: input.subjectId,
+    academic_session_id: input.sessionId,
+    is_lead: input.isLead ?? true,
+  });
+
+  if (error) throw toAppError(error);
+}
+
+/**
+ * Remove an assignment.
+ *
+ * Deliberately not cascading to their work. A teacher who stops taking a class
+ * keeps authorship of the lessons and assignments they wrote — `lessons.created_by`
+ * is ON DELETE SET NULL against `teachers`, not against this table — and the
+ * marks they recorded stay in the gradebook. What they lose is access, which is
+ * what an unassignment means.
+ */
+export async function unassignTeacher(assignmentId: string): Promise<void> {
+  const { error } = await supabase.from('teacher_assignments').delete().eq('id', assignmentId);
+  if (error) throw toAppError(error);
+}
+
+export interface TeacherOption {
+  id: string;
+  staff_number: string;
+  full_name: string;
+}
+
+/** Staff who can be put against a class. Active teachers only. */
+export async function listAssignableTeachers(): Promise<TeacherOption[]> {
+  const { data, error } = await supabase
+    .from('teachers')
+    .select('id, staff_number, user:users!teachers_user_id_fkey (full_name)')
+    .eq('is_active', true);
+
+  if (error) throw toAppError(error);
+
+  const rows = data as unknown as {
+    id: string;
+    staff_number: string;
+    user: { full_name: string } | null;
+  }[];
+
+  return rows
+    .map((row) => ({
+      id: row.id,
+      staff_number: row.staff_number,
+      full_name: row.user?.full_name ?? 'Unnamed teacher',
+    }))
+    .sort((a, b) => a.full_name.localeCompare(b.full_name));
+}

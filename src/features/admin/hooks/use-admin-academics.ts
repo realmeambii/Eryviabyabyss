@@ -199,3 +199,68 @@ export function useSessionMutations() {
 
   return { create, update, activate };
 }
+
+// ── Who teaches what ────────────────────────────────────────────────────────
+
+export function useClassTeaching(classId: string | undefined) {
+  const { currentSession } = useCurrentUser();
+
+  return useQuery({
+    queryKey: queryKeys.classes.subjects(classId ?? 'none'),
+    queryFn: () => classesApi.listClassTeaching(classId!, currentSession!.id),
+    enabled: Boolean(classId && currentSession?.id),
+    staleTime: 60_000,
+  });
+}
+
+export function useAssignableTeachers() {
+  const { school } = useCurrentUser();
+
+  return useQuery({
+    queryKey: queryKeys.teachers.list({ assignable: true, schoolId: school?.id }),
+    queryFn: classesApi.listAssignableTeachers,
+    enabled: Boolean(school?.id),
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useTeachingMutations() {
+  const queryClient = useQueryClient();
+  const { school, currentSession } = useCurrentUser();
+
+  const invalidate = () => {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.classes.all });
+    // A teacher's whole portal is a projection of these rows, so their scope
+    // cache has to go too — otherwise the person you just assigned still sees
+    // an empty dashboard until it expires.
+    void queryClient.invalidateQueries({ queryKey: queryKeys.teachers.all });
+  };
+
+  const assign = useMutation({
+    mutationFn: (input: {
+      teacherId: string;
+      classId: string;
+      subjectId: string;
+      isLead?: boolean;
+    }) =>
+      classesApi.assignTeacher({
+        ...input,
+        schoolId: school!.id,
+        sessionId: currentSession!.id,
+      }),
+    onSuccess: () => {
+      toast.success('Teacher assigned. They can now set work for this class.');
+      invalidate();
+    },
+  });
+
+  const unassign = useMutation({
+    mutationFn: classesApi.unassignTeacher,
+    onSuccess: () => {
+      toast.success('Assignment removed. Their existing work is kept.');
+      invalidate();
+    },
+  });
+
+  return { assign, unassign };
+}

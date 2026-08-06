@@ -456,6 +456,47 @@ join (
 where s.rn <= 40
 on conflict (parent_id, student_id) do nothing;
 
+-- ── Make the four demo accounts actually connected ─────────────────────────
+--  The round-robin above spreads pairings across all 20 teachers by modulo, so
+--  which classes `teacher@gnaschools.edu.ng` ends up with is an accident of
+--  arithmetic. It landed them on the four "B" arms while
+--  `student@gnaschools.edu.ng` sits in a different one — meaning the two
+--  headline demo accounts shared no class at all, and the first thing anyone
+--  tries after seeding ("set work as the teacher, hand it in as the pupil")
+--  could not be done.
+--
+--  So the demo teacher is moved onto the demo pupil's class for its core
+--  subjects. This *reassigns* rather than inserts: `teacher_assignments_one_lead`
+--  allows one lead per (class, subject, term), so a second row would be
+--  rejected.
+--
+--  Placed after enrolment and before the timetable on purpose — section 8 reads
+--  `teacher_assignments` to decide who stands in front of each period, so
+--  moving the teacher first keeps the timetable consistent with the change.
+--  Doing it afterwards would need an update that could trip the
+--  no-double-booking exclusion constraint.
+
+update public.teacher_assignments ta
+   set teacher_id = (
+     select t.id from public.teachers t
+       join public.users u on u.id = t.user_id
+      where u.email = 'teacher@gnaschools.edu.ng'
+   )
+ where ta.class_id = (
+         select e.class_id
+           from public.enrollments e
+           join public.students s on s.id = e.student_id
+           join public.users u on u.id = s.user_id
+          where u.email = 'student@gnaschools.edu.ng'
+            and e.status = 'active'
+          limit 1
+       )
+   and ta.subject_id in (
+         select id from public.subjects
+          where school_id = '10000000-0000-4000-8000-000000000001'::uuid
+            and code in ('MTH', 'ENG', 'BIO')
+       );
+
 -- ═══════════════════════════════════════════════════════════════════════════
 --  8 · Timetable
 -- ═══════════════════════════════════════════════════════════════════════════

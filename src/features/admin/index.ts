@@ -42,6 +42,22 @@ export { AccountStatusBadge } from './components/account-status-badge';
 export { CredentialDialog } from './components/credential-dialog';
 export { NewUserDialog } from './components/new-user-dialog';
 
+export {
+  assignTeacher,
+  listAssignableTeachers,
+  listClassTeaching,
+  unassignTeacher,
+  type ClassTeaching,
+  type TeacherOption,
+} from './api/classes.service';
+
+export {
+  useAssignableTeachers,
+  useClassTeaching,
+  useTeachingMutations,
+} from './hooks/use-admin-academics';
+
+export { default as AdminClassesPage } from './pages/admin-classes-page';
 export { default as AdminDashboard } from './pages/admin-dashboard';
 export { default as AdminParentsPage } from './pages/admin-parents-page';
 export { default as AdminStudentsPage } from './pages/admin-students-page';

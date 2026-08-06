@@ -63,7 +63,7 @@ const TeacherStudentPage = lazy(() => import('@/features/teacher/pages/teacher-s
 const TeacherLessonsPage = lazy(() => import('@/features/lessons/pages/teacher-lessons-page'));
 const TeacherLessonPage = lazy(() => import('@/features/lessons/pages/teacher-lesson-page'));
 const TeacherGradingPage = lazy(() => import('@/features/teacher/pages/teacher-grading-page'));
-const AdminClassesPlaceholder = lazy(() => import('@/routes/pages/admin-classes-page'));
+const AdminClassesPage = lazy(() => import('@/features/admin/pages/admin-classes-page'));
 const ParentDashboard = lazy(() => import('@/features/parent/pages/parent-dashboard'));
 const ParentChildrenPage = lazy(() => import('@/features/parent/pages/parent-children-page'));
 const AdminDashboard = lazy(() => import('@/features/admin/pages/admin-dashboard'));
@@ -192,12 +192,7 @@ export function AppRoutes() {
                 <Route path="students" element={<AdminStudentsPage />} />
                 <Route path="teachers" element={<AdminTeachersPage />} />
                 <Route path="parents" element={<AdminParentsPage />} />
-                {/* The administrator's class manager is its own screen and is
-                    not built yet. It must not fall back to the teacher's list:
-                    that page is scoped to `teacher_assignments`, so an
-                    administrator would be shown an empty register and told
-                    they teach nothing. */}
-                <Route path="classes" element={<AdminClassesPlaceholder />} />
+                <Route path="classes" element={<AdminClassesPage />} />
                 <Route path="subjects" element={<AdminSubjectsPage />} />
                 <Route path="sessions" element={<AdminSessionsPage />} />
                 <Route path="audit" element={<AuditPage />} />
