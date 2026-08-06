@@ -115,6 +115,14 @@ export const queryKeys = {
     paper: (quizId: string) => [...queryKeys.quizzes.all, quizId, 'paper'] as const,
     attempts: (quizId: string) => [...queryKeys.quizzes.all, quizId, 'attempts'] as const,
     myAttempt: (quizId: string) => [...queryKeys.quizzes.all, quizId, 'attempt', 'mine'] as const,
+    /** The authoring view — questions *with* their answer key. Teachers only. */
+    questions: (quizId: string) => [...queryKeys.quizzes.all, quizId, 'questions'] as const,
+  },
+
+  questionBank: {
+    all: ['question-bank'] as const,
+    list: (filters?: Record<string, unknown>) =>
+      [...queryKeys.questionBank.all, 'list', filters ?? {}] as const,
   },
 
   grades: {

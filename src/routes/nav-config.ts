@@ -72,6 +72,7 @@ export const NAVIGATION: Record<AppRole, NavSection[]> = {
         { label: 'My subjects', to: '/teacher/subjects', icon: BookOpen },
         { label: 'Lessons', to: '/teacher/lessons', icon: Library },
         { label: 'Assignments', to: '/teacher/assignments', icon: ClipboardList },
+        { label: 'Tests & quizzes', to: '/teacher/quizzes', icon: ClipboardCheck },
         { label: 'Grading', to: '/teacher/grading', icon: FileSpreadsheet },
         { label: 'Timetable', to: '/teacher/timetable', icon: CalendarDays },
       ],
