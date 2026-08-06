@@ -58,6 +58,7 @@ const TeacherAssignmentPage = lazy(
   () => import('@/features/assignments/pages/teacher-assignment-page'),
 );
 const TeacherQuizPage = lazy(() => import('@/features/quizzes/pages/teacher-quiz-page'));
+const TeacherStudentPage = lazy(() => import('@/features/teacher/pages/teacher-student-page'));
 const TeacherLessonsPage = lazy(() => import('@/features/lessons/pages/teacher-lessons-page'));
 const TeacherLessonPage = lazy(() => import('@/features/lessons/pages/teacher-lesson-page'));
 const TeacherGradingPage = lazy(() => import('@/features/teacher/pages/teacher-grading-page'));
@@ -166,6 +167,7 @@ export function AppRoutes() {
                 <Route path="lessons/:lessonId" element={<TeacherLessonPage />} />
                 <Route path="assignments/:assignmentId" element={<TeacherAssignmentPage />} />
                 <Route path="quizzes/:quizId" element={<TeacherQuizPage />} />
+                <Route path="students/:studentId" element={<TeacherStudentPage />} />
                 <Route path="grading" element={<TeacherGradingPage />} />
                 <Route path="quizzes" element={<QuizzesPage />} />
               </>,
