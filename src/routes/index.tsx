@@ -54,6 +54,8 @@ const TeacherClassesPage = lazy(() => import('@/features/teacher/pages/teacher-c
 const TeacherClassPage = lazy(() => import('@/features/teacher/pages/teacher-class-page'));
 const TeacherSubjectsPage = lazy(() => import('@/features/teacher/pages/teacher-subjects-page'));
 const TeacherSubjectPage = lazy(() => import('@/features/teacher/pages/teacher-subject-page'));
+const TeacherLessonsPage = lazy(() => import('@/features/lessons/pages/teacher-lessons-page'));
+const TeacherLessonPage = lazy(() => import('@/features/lessons/pages/teacher-lesson-page'));
 const TeacherGradingPage = lazy(() => import('@/features/teacher/pages/teacher-grading-page'));
 const AdminClassesPlaceholder = lazy(() => import('@/routes/pages/admin-classes-page'));
 const ParentDashboard = lazy(() => import('@/features/parent/pages/parent-dashboard'));
@@ -156,6 +158,8 @@ export function AppRoutes() {
                 <Route path="classes/:classId" element={<TeacherClassPage />} />
                 <Route path="subjects" element={<TeacherSubjectsPage />} />
                 <Route path="subjects/:subjectId" element={<TeacherSubjectPage />} />
+                <Route path="lessons" element={<TeacherLessonsPage />} />
+                <Route path="lessons/:lessonId" element={<TeacherLessonPage />} />
                 <Route path="grading" element={<TeacherGradingPage />} />
                 <Route path="quizzes" element={<QuizzesPage />} />
               </>,
