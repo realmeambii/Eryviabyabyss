@@ -1624,6 +1624,15 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: number;
       };
+      list_correspondents: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          user_id: string;
+          full_name: string;
+          avatar_path: string | null;
+          role: string;
+        }[];
+      };
       provision_user_role: {
         Args: { p_user_id: string; p_role: string; p_school_id: string };
         Returns: undefined;

@@ -36,6 +36,14 @@ export const paths = {
 
   studentDocument: (schoolId: string, studentId: string, fileName: string) =>
     `${schoolId}/${studentId}/${safeName(fileName)}`,
+
+  /**
+   * Keyed on the conversation, not the message: the upload happens before the
+   * message row exists, and the storage policy reads segment 2 as the
+   * conversation id to decide access.
+   */
+  messageAttachment: (schoolId: string, conversationId: string, fileName: string) =>
+    `${schoolId}/${conversationId}/${safeName(fileName)}`,
 } as const;
 
 /**

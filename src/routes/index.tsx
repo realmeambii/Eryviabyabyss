@@ -83,6 +83,7 @@ const TimetablePage = lazy(() => import('@/features/timetable/pages/timetable-pa
 const QuizzesPage = lazy(() => import('@/features/quizzes/pages/quizzes-page'));
 const NotificationsPage = lazy(() => import('@/features/notifications/pages/notifications-page'));
 const AnnouncementsPage = lazy(() => import('@/features/announcements/pages/announcements-page'));
+const MessagesPage = lazy(() => import('@/features/messages/pages/messages-page'));
 const AuditPage = lazy(() => import('@/routes/pages/audit-page'));
 
 // ── System ──────────────────────────────────────────────────────────────────
@@ -100,6 +101,7 @@ function sharedPortalRoutes(): ReactNode {
       <Route path="grades" element={<GradesPage />} />
       <Route path="timetable" element={<TimetablePage />} />
       <Route path="announcements" element={<AnnouncementsPage />} />
+      <Route path="messages" element={<MessagesPage />} />
       <Route path="notifications" element={<NotificationsPage />} />
       <Route path="profile" element={<ProfilePage />} />
     </>

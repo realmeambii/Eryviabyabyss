@@ -1,5 +1,6 @@
 import {
   BellRing,
+  MessagesSquare,
   BookOpen,
   CalendarDays,
   CalendarRange,
@@ -54,6 +55,7 @@ export const NAVIGATION: Record<AppRole, NavSection[]> = {
       label: 'Updates',
       items: [
         { label: 'Announcements', to: '/student/announcements', icon: Megaphone },
+        { label: 'Messages', to: '/student/messages', icon: MessagesSquare },
         {
           label: 'Notifications',
           to: '/student/notifications',
@@ -81,6 +83,7 @@ export const NAVIGATION: Record<AppRole, NavSection[]> = {
       label: 'Updates',
       items: [
         { label: 'Announcements', to: '/teacher/announcements', icon: Megaphone },
+        { label: 'Messages', to: '/teacher/messages', icon: MessagesSquare },
         {
           label: 'Notifications',
           to: '/teacher/notifications',
@@ -104,6 +107,7 @@ export const NAVIGATION: Record<AppRole, NavSection[]> = {
       label: 'Updates',
       items: [
         { label: 'Announcements', to: '/parent/announcements', icon: Megaphone },
+        { label: 'Messages', to: '/parent/messages', icon: MessagesSquare },
         {
           label: 'Notifications',
           to: '/parent/notifications',
@@ -137,6 +141,7 @@ export const NAVIGATION: Record<AppRole, NavSection[]> = {
       label: 'School',
       items: [
         { label: 'Announcements', to: '/admin/announcements', icon: Megaphone },
+        { label: 'Messages', to: '/admin/messages', icon: MessagesSquare },
         {
           label: 'Notifications',
           to: '/admin/notifications',

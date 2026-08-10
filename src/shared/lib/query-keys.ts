@@ -147,6 +147,14 @@ export const queryKeys = {
       [...queryKeys.announcements.all, 'detail', announcementId] as const,
   },
 
+  messages: {
+    all: ['messages'] as const,
+    conversations: () => [...queryKeys.messages.all, 'conversations'] as const,
+    thread: (conversationId: string) =>
+      [...queryKeys.messages.all, 'thread', conversationId] as const,
+    correspondents: () => [...queryKeys.messages.all, 'correspondents'] as const,
+  },
+
   notifications: {
     all: ['notifications'] as const,
     list: (filters?: Record<string, unknown>) =>
