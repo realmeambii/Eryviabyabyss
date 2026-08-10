@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { Bell, Menu, Search } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useCurrentUser, useSignOut } from '@/features/auth';
+import { SearchDialog } from '@/features/search';
 import { ThemeToggle } from '@/shared/components/theme-toggle';
 import { UserAvatar } from '@/shared/components/user-avatar';
 import {
@@ -26,8 +28,24 @@ export function AppTopbar({ role, unreadCount, onOpenSidebar }: AppTopbarProps) 
   const { user, currentSession } = useCurrentUser();
   const signOut = useSignOut();
   const navigate = useNavigate();
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const roleBase = `/${role === 'administrator' ? 'admin' : role}`;
+
+  // ⌘K / Ctrl-K from anywhere in the shell. Registered once here rather than in
+  // the dialog, which is unmounted until it opens.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() === 'k' && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-card px-4 sm:px-6">
@@ -41,21 +59,44 @@ export function AppTopbar({ role, unreadCount, onOpenSidebar }: AppTopbarProps) 
         <Menu className="size-[17px]" aria-hidden />
       </Button>
 
-      {/* Search is wired in Phase 2; the affordance stays so the shell reads
-          the way the finished product will. */}
-      <div className="relative hidden max-w-[420px] flex-1 sm:block">
+      {/* A button dressed as a field. The typing happens in the dialog, so the
+          first keystroke is not lost to a remount when it opens. */}
+      <button
+        type="button"
+        onClick={() => {
+          setSearchOpen(true);
+        }}
+        aria-label="Search"
+        aria-keyshortcuts="Control+K Meta+K"
+        className="relative hidden h-9.5 max-w-[420px] flex-1 items-center rounded-lg border border-border bg-surface-2 pr-2.5 pl-10 text-left transition-colors hover:bg-surface-3 sm:flex"
+      >
         <Search
           className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-3"
           aria-hidden
         />
-        <input
-          type="search"
-          placeholder="Search lessons, assignments, people…"
-          disabled
-          aria-label="Search"
-          className="h-9.5 w-full rounded-lg border border-border bg-surface-2 pr-3 pl-10 text-[13.5px] text-ink placeholder:text-ink-3 disabled:cursor-not-allowed disabled:opacity-70"
-        />
-      </div>
+        <span className="flex-1 truncate text-[13.5px] text-ink-3">
+          Search lessons, assignments, people…
+        </span>
+        <kbd className="hidden rounded border border-border bg-card px-1.5 py-0.5 text-[10.5px] font-semibold text-ink-3 lg:inline-block">
+          Ctrl K
+        </kbd>
+      </button>
+
+      {/* Narrow screens get the icon; the field would crowd out the session
+          badge and the avatar. */}
+      <Button
+        variant="secondary"
+        size="icon"
+        className="sm:hidden"
+        onClick={() => {
+          setSearchOpen(true);
+        }}
+        aria-label="Search"
+      >
+        <Search className="size-[17px]" aria-hidden />
+      </Button>
+
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} role={role} />
 
       <div className="ml-auto flex items-center gap-2">
         {currentSession ? (

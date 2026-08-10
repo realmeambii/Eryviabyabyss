@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { GraduationCap, Plus, Search } from 'lucide-react';
 
@@ -44,7 +45,11 @@ const ENROLMENT_STATUSES: { value: StudentStatus; label: string }[] = [
 ];
 
 export default function AdminStudentsPage() {
-  const [search, setSearch] = useState('');
+  // Seeded from `?q=`, which is how global search hands a pupil over: an
+  // administrator has no per-pupil screen, so the hit lands on this list with
+  // the name already typed rather than on an unfiltered page of two thousand.
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [classId, setClassId] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);

@@ -63,6 +63,7 @@ const TeacherStudentPage = lazy(() => import('@/features/teacher/pages/teacher-s
 const TeacherLessonsPage = lazy(() => import('@/features/lessons/pages/teacher-lessons-page'));
 const TeacherLessonPage = lazy(() => import('@/features/lessons/pages/teacher-lesson-page'));
 const TeacherGradingPage = lazy(() => import('@/features/teacher/pages/teacher-grading-page'));
+const TeacherAnalyticsPage = lazy(() => import('@/features/teacher/pages/teacher-analytics-page'));
 const AdminClassesPage = lazy(() => import('@/features/admin/pages/admin-classes-page'));
 const ParentDashboard = lazy(() => import('@/features/parent/pages/parent-dashboard'));
 const ParentChildrenPage = lazy(() => import('@/features/parent/pages/parent-children-page'));
@@ -173,6 +174,7 @@ export function AppRoutes() {
                 <Route path="quizzes/:quizId" element={<TeacherQuizPage />} />
                 <Route path="students/:studentId" element={<TeacherStudentPage />} />
                 <Route path="grading" element={<TeacherGradingPage />} />
+                <Route path="analytics" element={<TeacherAnalyticsPage />} />
                 <Route path="quizzes" element={<QuizzesPage />} />
               </>,
             )}

@@ -63,13 +63,13 @@ export async function listLessons({
 
   const { data, error } = await query;
   if (error) throw toAppError(error);
-  return data as unknown as LessonWithAuthor[];
+  return data;
 }
 
 export async function getLesson(id: string): Promise<LessonWithAuthor> {
   const { data, error } = await supabase.from('lessons').select(SELECT).eq('id', id).single();
   if (error) throw toAppError(error);
-  return data as unknown as LessonWithAuthor;
+  return data;
 }
 
 export async function createLesson(input: TablesInsert<'lessons'>): Promise<Lesson> {

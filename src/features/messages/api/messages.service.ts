@@ -160,7 +160,7 @@ export async function listMessages(conversationId: string): Promise<MessageWithS
     .limit(500);
 
   if (error) throw toAppError(error);
-  return data as unknown as MessageWithSender[];
+  return data;
 }
 
 export async function sendMessage(input: {

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Archive, BookOpen, Pencil, Plus, RotateCcw, Search } from 'lucide-react';
@@ -83,7 +84,9 @@ function nullIfBlank(value: string | undefined): string | null {
 }
 
 export default function AdminSubjectsPage() {
-  const [search, setSearch] = useState('');
+  // Seeded from `?q=` so a subject opened from global search arrives filtered.
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [showArchived, setShowArchived] = useState(false);
   const [editing, setEditing] = useState<SubjectWithUsage | null>(null);
   const [creating, setCreating] = useState(false);

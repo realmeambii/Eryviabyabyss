@@ -62,7 +62,7 @@ export async function listAssignments(
 
   const { data, error } = await query;
   if (error) throw toAppError(error);
-  return data as unknown as AssignmentWithContext[];
+  return data;
 }
 
 export async function getAssignment(id: string): Promise<AssignmentWithContext> {
@@ -77,7 +77,7 @@ export async function getAssignment(id: string): Promise<AssignmentWithContext> 
     .single();
 
   if (error) throw toAppError(error);
-  return data as unknown as AssignmentWithContext;
+  return data;
 }
 
 export async function createAssignment(input: TablesInsert<'assignments'>): Promise<Assignment> {

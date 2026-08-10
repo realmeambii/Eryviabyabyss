@@ -41,7 +41,7 @@ export async function listStudentGrades(
 
   const { data, error } = await query;
   if (error) throw toAppError(error);
-  return data as unknown as GradeWithSubject[];
+  return data;
 }
 
 export async function listClassGrades(

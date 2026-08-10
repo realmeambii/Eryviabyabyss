@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Library, Plus, Search, Trash2, UserPlus, Users } from 'lucide-react';
 
 import { ConfirmDialog } from '@/shared/components/confirm-dialog';
@@ -43,7 +44,9 @@ import {
  * the only way to create one was by hand against the database.
  */
 export default function AdminClassesPage() {
-  const [search, setSearch] = useState('');
+  // Seeded from `?q=` so a class opened from global search arrives filtered.
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [managing, setManagingId] = useState<string | null>(null);
 
   const debounced = useDebouncedValue(search, 250);

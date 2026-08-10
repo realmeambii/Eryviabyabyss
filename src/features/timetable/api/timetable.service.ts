@@ -38,7 +38,7 @@ export async function getClassTimetable(
 
   const { data, error } = await query;
   if (error) throw toAppError(error);
-  return data as unknown as TimetableSlotWithContext[];
+  return data;
 }
 
 export async function getTeacherTimetable(
@@ -56,7 +56,7 @@ export async function getTeacherTimetable(
 
   const { data, error } = await query;
   if (error) throw toAppError(error);
-  return data as unknown as TimetableSlotWithContext[];
+  return data;
 }
 
 /** Group a flat slot list into the five weekday columns the grid renders. */

@@ -199,7 +199,7 @@ export async function listClassTeaching(
     .eq('academic_session_id', sessionId);
 
   if (error) throw toAppError(error);
-  return data as unknown as ClassTeaching[];
+  return data;
 }
 
 /**

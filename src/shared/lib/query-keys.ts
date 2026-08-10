@@ -63,6 +63,8 @@ export const queryKeys = {
       [...queryKeys.teachers.all, 'class-stats', classId, sessionId] as const,
     markingQueue: (filters?: Record<string, unknown>) =>
       [...queryKeys.teachers.all, 'marking-queue', filters ?? {}] as const,
+    analytics: (sessionId: string | null, classIds: string[]) =>
+      [...queryKeys.teachers.all, 'analytics', sessionId, [...classIds].sort().join(',')] as const,
   },
 
   parents: {
@@ -175,6 +177,12 @@ export const queryKeys = {
     list: (filters?: Record<string, unknown>) =>
       [...queryKeys.audit.all, 'list', filters ?? {}] as const,
   },
+
+  /**
+   * Global search. Keyed on the term alone — the results are already scoped to
+   * the caller by RLS, and a fresh sign-in clears the whole cache.
+   */
+  search: (term: string) => ['search', term] as const,
 } as const;
 
 export type QueryKeys = typeof queryKeys;

@@ -42,7 +42,7 @@ export async function getCurrentEnrollment(
     .maybeSingle();
 
   if (error) throw toAppError(error);
-  return data as unknown as CurrentEnrollment | null;
+  return data;
 }
 
 /**

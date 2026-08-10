@@ -54,6 +54,12 @@ export {
   useStudentSubmissionHistory,
 } from './hooks/use-student-profile';
 
+export {
+  getTeachingAnalytics,
+  type ClassPerformance,
+  type TeachingAnalytics,
+} from './api/analytics.service';
+
 export { StatTile } from './components/stat-tile';
 
 export { default as TeacherDashboard } from './pages/teacher-dashboard';
@@ -63,3 +69,4 @@ export { default as TeacherSubjectsPage } from './pages/teacher-subjects-page';
 export { default as TeacherSubjectPage } from './pages/teacher-subject-page';
 export { default as TeacherStudentPage } from './pages/teacher-student-page';
 export { default as TeacherGradingPage } from './pages/teacher-grading-page';
+export { default as TeacherAnalyticsPage } from './pages/teacher-analytics-page';

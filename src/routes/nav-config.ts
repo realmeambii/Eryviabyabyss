@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   BellRing,
   MessagesSquare,
   BookOpen,
@@ -77,6 +78,7 @@ export const NAVIGATION: Record<AppRole, NavSection[]> = {
         { label: 'Tests & quizzes', to: '/teacher/quizzes', icon: ClipboardCheck },
         { label: 'Grading', to: '/teacher/grading', icon: FileSpreadsheet },
         { label: 'Timetable', to: '/teacher/timetable', icon: CalendarDays },
+        { label: 'Analytics', to: '/teacher/analytics', icon: BarChart3 },
       ],
     },
     {

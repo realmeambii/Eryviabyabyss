@@ -46,13 +46,13 @@ export async function listAnnouncements({
 
   const { data, error } = await query;
   if (error) throw toAppError(error);
-  return data as unknown as AnnouncementWithAuthor[];
+  return data;
 }
 
 export async function getAnnouncement(id: string): Promise<AnnouncementWithAuthor> {
   const { data, error } = await supabase.from('announcements').select(SELECT).eq('id', id).single();
   if (error) throw toAppError(error);
-  return data as unknown as AnnouncementWithAuthor;
+  return data;
 }
 
 export async function createAnnouncement(

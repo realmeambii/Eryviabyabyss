@@ -110,7 +110,7 @@ export async function getStudentSubmissions(
 
   const { data, error } = await query;
   if (error) throw toAppError(error);
-  return data as unknown as SubmissionHistoryRow[];
+  return data;
 }
 
 export interface AttemptHistoryRow {
@@ -141,7 +141,7 @@ export async function getStudentAttempts(
 
   const { data, error } = await query;
   if (error) throw toAppError(error);
-  return data as unknown as AttemptHistoryRow[];
+  return data;
 }
 
 // ── Teacher notes ───────────────────────────────────────────────────────────
@@ -174,7 +174,7 @@ export async function listStudentNotes(studentId: string): Promise<NoteWithAutho
     .order('created_at', { ascending: false });
 
   if (error) throw toAppError(error);
-  return data as unknown as NoteWithAuthor[];
+  return data;
 }
 
 export async function addStudentNote(input: TablesInsert<'student_notes'>): Promise<StudentNote> {
