@@ -8,6 +8,7 @@ import {
   getClassRoster,
   getClassStatistics,
   getWorkload,
+  listPendingAttempts,
   listPendingSubmissions,
 } from '../api/teacher.service';
 import { useTeacherScope } from './use-teacher-scope';
@@ -65,6 +66,26 @@ export function useMarkingQueue(
   return useQuery({
     queryKey: queryKeys.teachers.markingQueue({ ...options, classIds }),
     queryFn: () => listPendingSubmissions(classIds, options),
+    enabled: !isPending && classIds.length > 0,
+    staleTime: 30_000,
+  });
+}
+
+/**
+ * Quiz papers waiting on a human.
+ *
+ * Kept as its own query rather than merged into the marking queue: the two come
+ * from different tables with different policies, and a failure to read one
+ * should not blank the other. The grading page interleaves them for display.
+ */
+export function usePendingAttempts(
+  options: { classId?: string; subjectId?: string; limit?: number } = {},
+) {
+  const { classIds, isPending } = useTeacherScope();
+
+  return useQuery({
+    queryKey: queryKeys.teachers.markingQueue({ ...options, classIds, kind: 'quiz' }),
+    queryFn: () => listPendingAttempts(classIds, options),
     enabled: !isPending && classIds.length > 0,
     staleTime: 30_000,
   });

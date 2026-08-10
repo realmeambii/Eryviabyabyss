@@ -22,7 +22,8 @@ import { useDebouncedValue } from '@/shared/hooks/use-debounced-value';
 import { ROLE_LABEL } from '@/shared/lib/constants';
 import { errorMessage } from '@/shared/lib/errors';
 import { cn } from '@/shared/utils/cn';
-import { isAppRole } from '@/shared/types';
+import { isAppRole, type AppRole } from '@/shared/types';
+import { useAuth } from '@/features/auth';
 
 import { useCorrespondents, useMessageMutations } from '../hooks/use-messages';
 
@@ -34,6 +35,40 @@ import { useCorrespondents, useMessageMutations } from '../hooks/use-messages';
  * policy enforces. So the picker cannot offer somebody the write would then
  * refuse, and a teacher never sees a pupil they do not teach.
  */
+
+/**
+ * Who each role can actually reach, said in their own terms.
+ *
+ * `may_message()` gives a different answer to each role, so a single sentence
+ * was wrong for three of the four: a pupil was being told they could write to
+ * "pupils you teach".
+ */
+const REACH: Record<AppRole, string> = {
+  teacher:
+    'You can write to the pupils you teach, their guardians, your colleagues and the office.',
+  student: 'You can write to your teachers and the school office. Not to other pupils.',
+  parent:
+    'You can write to your child’s teachers and the school office. Not to other parents or pupils.',
+  administrator: 'You can write to anyone at the school — staff, pupils and guardians.',
+};
+
+/**
+ * Group order, fixed.
+ *
+ * The list arrives sorted by name, so grouping by first appearance put whichever
+ * role happened to own the alphabetically-first person at the top and scattered
+ * the rest. The office first, then colleagues, then the people they are about —
+ * which is the order somebody scans in.
+ */
+const ROLE_ORDER: AppRole[] = ['administrator', 'teacher', 'student', 'parent'];
+
+function roleRank(role: string): number {
+  const index = ROLE_ORDER.indexOf(role as AppRole);
+  // An unrecognised label sorts last rather than first: a role added by
+  // migration should not silently displace the office.
+  return index === -1 ? ROLE_ORDER.length : index;
+}
+
 export function NewConversationDialog({
   open,
   onOpenChange,
@@ -45,6 +80,7 @@ export function NewConversationDialog({
 }) {
   const correspondents = useCorrespondents(open);
   const { start } = useMessageMutations();
+  const { primaryRole } = useAuth();
 
   const [search, setSearch] = useState('');
   const [chosen, setChosen] = useState<string[]>([]);
@@ -84,7 +120,7 @@ export function NewConversationDialog({
       bucket.push(person);
       buckets.set(person.role, bucket);
     }
-    return [...buckets.entries()];
+    return [...buckets.entries()].sort(([a], [b]) => roleRank(a) - roleRank(b));
   }, [filtered]);
 
   const selected = people.filter((person) => chosen.includes(person.user_id));
@@ -96,8 +132,7 @@ export function NewConversationDialog({
         <DialogHeader>
           <DialogTitle>New message</DialogTitle>
           <DialogDescription>
-            You can write to the people your role reaches — pupils you teach, their guardians,
-            colleagues and the office.
+            {primaryRole ? REACH[primaryRole] : 'You can write to the people your role reaches.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -154,7 +189,13 @@ export function NewConversationDialog({
               <EmptyState
                 icon={Search}
                 title="Nobody to write to"
-                description="You have no classes this term, so there is nobody your role reaches yet."
+                description={
+                  primaryRole === 'teacher'
+                    ? 'You have no classes this term, so there is nobody your role reaches yet.'
+                    : primaryRole === 'parent'
+                      ? 'No child is linked to your account yet, so there is nobody to write to. Ask the school office to link you.'
+                      : 'Your account is not attached to a class yet. Ask the school office.'
+                }
                 className="border-0"
               />
             ) : (

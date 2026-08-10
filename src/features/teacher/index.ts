@@ -5,11 +5,13 @@ export {
   getClassStatistics,
   getWorkload,
   listMyAssignments,
+  listPendingAttempts,
   listPendingSubmissions,
   type ClassStatistics,
   type MyAssignment,
   type MyClass,
   type MySubject,
+  type PendingAttempt,
   type PendingSubmission,
   type RosterStudent,
   type TeacherWorkload,
@@ -27,6 +29,7 @@ export {
   useClassStatistics,
   useMarkingQueue,
   useMyTimetable,
+  usePendingAttempts,
   useTeacherWorkload,
 } from './hooks/use-teacher-data';
 

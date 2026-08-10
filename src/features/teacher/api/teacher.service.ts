@@ -458,3 +458,78 @@ export async function listPendingSubmissions(
       : null,
   }));
 }
+
+export interface PendingAttempt {
+  id: string;
+  status: string;
+  submitted_at: string | null;
+  score: number | null;
+  max_score: number | null;
+  student: { id: string; full_name: string; admission_number: string } | null;
+  quiz: {
+    id: string;
+    title: string;
+    class_id: string;
+    subject_id: string;
+    total_points: number | null;
+  } | null;
+}
+
+/**
+ * Quiz papers the auto-marker could not finish.
+ *
+ * A paper stops at `submitted` when it holds an essay, a short answer or
+ * anything else `app.grade_quiz_attempt()` declined to judge; the objective
+ * questions are already scored and `score` carries that running total, which is
+ * why the queue shows it as a starting point rather than an empty box.
+ *
+ * Sorted oldest first for the same reason the submission queue is: a pupil who
+ * sat the paper on Monday should not wait behind one who sat it this morning.
+ */
+export async function listPendingAttempts(
+  classIds: string[],
+  options: { limit?: number; classId?: string; subjectId?: string } = {},
+): Promise<PendingAttempt[]> {
+  if (classIds.length === 0) return [];
+
+  let query = supabase
+    .from('quiz_attempts')
+    .select(
+      `id, status, submitted_at, score, max_score,
+       student:students!quiz_attempts_student_id_fkey (
+         id, admission_number, user:users!students_user_id_fkey (full_name)
+       ),
+       quiz:quizzes!inner (id, title, class_id, subject_id, total_points)`,
+    )
+    .eq('status', 'submitted')
+    .order('submitted_at', { ascending: true })
+    .limit(options.limit ?? 50);
+
+  query = options.classId
+    ? query.eq('quiz.class_id', options.classId)
+    : query.in('quiz.class_id', classIds);
+
+  if (options.subjectId) query = query.eq('quiz.subject_id', options.subjectId);
+
+  const { data, error } = await query;
+  if (error) throw toAppError(error);
+
+  const rows = data as unknown as (Omit<PendingAttempt, 'student'> & {
+    student: {
+      id: string;
+      admission_number: string;
+      user: { full_name: string } | null;
+    } | null;
+  })[];
+
+  return rows.map((row) => ({
+    ...row,
+    student: row.student
+      ? {
+          id: row.student.id,
+          full_name: row.student.user?.full_name ?? 'Unnamed student',
+          admission_number: row.student.admission_number,
+        }
+      : null,
+  }));
+}
