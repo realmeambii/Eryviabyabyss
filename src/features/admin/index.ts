@@ -54,6 +54,7 @@ export {
 export {
   useAssignableTeachers,
   useClassTeaching,
+  useClasses,
   useTeachingMutations,
 } from './hooks/use-admin-academics';
 

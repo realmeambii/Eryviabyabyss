@@ -4,12 +4,14 @@ import { useAuth } from '@/features/auth';
 import { ModulePlaceholder } from '@/shared/components/module-placeholder';
 
 import StudentTimetablePage from './student-timetable-page';
+import TeacherTimetablePage from './teacher-timetable-page';
 
-/** Shared `/…/timetable` route. Student view is live; other roles land in their phase. */
+/** Shared `/…/timetable` route. Student and teacher views are live. */
 export default function TimetablePage() {
-  const { isStudent } = useAuth();
+  const { isStudent, isTeacher } = useAuth();
 
   if (isStudent) return <StudentTimetablePage />;
+  if (isTeacher) return <TeacherTimetablePage />;
 
   return (
     <ModulePlaceholder
@@ -17,7 +19,6 @@ export default function TimetablePage() {
       title="Timetable"
       description="The weekly grid, per class and per teacher."
       planned={[
-        'Teacher: their own week across every class they take',
         'Administrator: drag-to-move editor with live clash detection',
         'Parent: a child’s week',
         'Room allocation and export to calendar',

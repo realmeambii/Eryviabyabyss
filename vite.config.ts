@@ -62,6 +62,19 @@ export default defineConfig(({ mode }) => {
             if (id.includes('@radix-ui')) return 'vendor-radix';
             if (id.includes('lucide-react')) return 'vendor-icons';
 
+            // TipTap drags ProseMirror in behind it — together about 130kB
+            // gzipped, and *authoring* code. Rollup was folding it into the
+            // same chunk as the sanitiser, so a pupil opening a lesson
+            // downloaded the whole editor to read a paragraph they cannot edit.
+            // On a Nigerian mobile connection that is the difference between a
+            // page that opens and one that does not.
+            if (/[\\/]node_modules[\\/](@tiptap|prosemirror-|y-prosemirror)/.test(id)) {
+              return 'vendor-editor';
+            }
+            // Everyone needs this one: `<RichText>` sanitises on every read
+            // path, so it must not ride along with the editor.
+            if (id.includes('dompurify')) return 'vendor-sanitize';
+
             return undefined;
           },
         },
