@@ -31,6 +31,7 @@ import { errorMessage } from '@/shared/lib/errors';
 import { className as formatClassName } from '@/shared/utils/format';
 import type { EmploymentType, Gender, GuardianRelationship } from '@/shared/types';
 
+import { CAPABILITIES, CAPABILITY_LABEL, type Capability } from '../api/administrators.service';
 import type { CreatedAccount, ProvisionableRole } from '../api/users.service';
 import { useClasses } from '../hooks/use-admin-academics';
 import { useStudentOptions, useUserProvisioning } from '../hooks/use-admin-users';
@@ -86,6 +87,11 @@ const ROLE_COPY: Record<ProvisionableRole, { title: string; description: string 
     title: 'Add a parent or guardian',
     description:
       'Creates their sign-in and links them to their children. They see only the records of the children linked here.',
+  },
+  administrator: {
+    title: 'Add an administrator',
+    description:
+      'Creates their sign-in and grants the permissions you tick below. They can see the school either way — what you choose here is what they may change.',
   },
 };
 
@@ -180,6 +186,10 @@ export function NewUserDialog({
   const { create } = useUserProvisioning();
   const [children, setChildren] = useState<ChildLink[]>([]);
   const [issued, setIssued] = useState<CreatedAccount | null>(null);
+  // Deliberately starts empty. A new administrator who can do nothing is a
+  // safe mistake; one who can do everything because the form pre-ticked the
+  // boxes is not.
+  const [capabilities, setCapabilities] = useState<Capability[]>([]);
 
   const classes = useClasses();
   // Only pulled once a guardian is actually being added — the picker needs the
@@ -194,6 +204,7 @@ export function NewUserDialog({
     if (open) {
       form.reset(EMPTY);
       setChildren([]);
+      setCapabilities([]);
       create.reset();
     }
     // `form` and `create` are stable across renders; re-running on their
@@ -215,6 +226,8 @@ export function NewUserDialog({
         gender: orNull(values.gender) as Gender | null,
         dateOfBirth: orNull(values.dateOfBirth),
         sendWelcomeEmail: values.sendWelcomeEmail,
+
+        ...(role === 'administrator' ? { capabilities } : {}),
 
         ...(role === 'student'
           ? {
@@ -382,6 +395,57 @@ export function NewUserDialog({
                     )}
                   />
                 </div>
+
+                {/* ── Administrator ────────────────────────────────────── */}
+                {role === 'administrator' ? (
+                  <div className="space-y-2 border-t border-border pt-4">
+                    <p className="text-[13px] font-semibold text-ink">Permissions</p>
+                    <p className="text-[12.5px] text-ink-3">
+                      What this administrator may change. They can read the school either way — an
+                      exams officer who cannot see a class list cannot do the job. Nothing is ticked
+                      by default; you can change these at any time.
+                    </p>
+
+                    <div className="grid gap-2 pt-1 sm:grid-cols-2">
+                      {CAPABILITIES.map((capability) => {
+                        const on = capabilities.includes(capability);
+                        const meta = CAPABILITY_LABEL[capability];
+
+                        return (
+                          <label
+                            key={capability}
+                            className={
+                              on
+                                ? 'flex cursor-pointer items-start gap-2.5 rounded-lg border border-brand-border bg-brand-soft/40 p-2.5'
+                                : 'flex cursor-pointer items-start gap-2.5 rounded-lg border border-border bg-surface-2 p-2.5'
+                            }
+                          >
+                            <input
+                              type="checkbox"
+                              checked={on}
+                              onChange={(event) => {
+                                setCapabilities((current) =>
+                                  event.target.checked
+                                    ? [...current, capability]
+                                    : current.filter((entry) => entry !== capability),
+                                );
+                              }}
+                              className="mt-0.5 size-4 shrink-0 rounded border-border"
+                            />
+                            <span className="min-w-0">
+                              <span className="block text-[13px] font-semibold text-ink">
+                                {meta.title}
+                              </span>
+                              <span className="block text-[11.5px] text-ink-3">
+                                {meta.description}
+                              </span>
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
 
                 {/* ── Student ──────────────────────────────────────────── */}
                 {role === 'student' ? (

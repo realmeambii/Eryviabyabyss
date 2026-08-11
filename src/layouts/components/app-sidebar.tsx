@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
@@ -9,6 +10,7 @@ import type { AppRole } from '@/shared/types';
 import { cn } from '@/shared/utils/cn';
 
 import { NAVIGATION } from '@/routes/nav-config';
+import { useMyCapabilities } from '@/features/admin';
 
 interface AppSidebarProps {
   role: AppRole;
@@ -30,7 +32,31 @@ export function AppSidebar({
   onToggle,
   onNavigate,
 }: AppSidebarProps) {
-  const sections = NAVIGATION[role];
+  // Administrators see only the sections they can act on. This is presentation,
+  // not access — `app.admin_can()` in the policies is what actually refuses a
+  // write, and an administrator who types the URL still reaches the page and
+  // reads it. Hiding a menu entry to a screen whose every button is refused is
+  // the whole of the intent.
+  const capabilities = useMyCapabilities();
+
+  const sections = useMemo(() => {
+    const all = NAVIGATION[role];
+    if (role !== 'administrator') return all;
+
+    // While it loads, show everything. Blanking the sidebar for a second on
+    // every page load is worse than briefly offering one item too many.
+    const mine = capabilities.data;
+    if (!mine || mine.isSuper) return all;
+
+    return all
+      .map((section) => ({
+        ...section,
+        items: section.items.filter(
+          (item) => !item.capability || mine.capabilities.includes(item.capability),
+        ),
+      }))
+      .filter((section) => section.items.length > 0);
+  }, [role, capabilities.data]);
 
   return (
     <aside

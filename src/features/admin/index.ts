@@ -52,6 +52,25 @@ export {
 } from './api/classes.service';
 
 export {
+  CAPABILITIES,
+  CAPABILITY_LABEL,
+  getMyCapabilities,
+  listAdministrators,
+  revokeAdministrator,
+  setCapabilities,
+  type AdministratorRow,
+  type Capability,
+  type MyCapabilities,
+} from './api/administrators.service';
+
+export {
+  useAdministratorMutations,
+  useAdministrators,
+  useCan,
+  useMyCapabilities,
+} from './hooks/use-administrators';
+
+export {
   useAssignableTeachers,
   useClassMutations,
   useClassTeaching,
@@ -63,6 +82,7 @@ export {
   useTeachingMutations,
 } from './hooks/use-admin-academics';
 
+export { default as AdminAdministratorsPage } from './pages/admin-administrators-page';
 export { default as AdminClassesPage } from './pages/admin-classes-page';
 export { default as AdminDashboard } from './pages/admin-dashboard';
 export { default as AdminParentsPage } from './pages/admin-parents-page';

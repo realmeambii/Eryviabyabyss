@@ -31,7 +31,12 @@ import type {
 
 // ── Provisioning (Edge Function) ────────────────────────────────────────────
 
-export type ProvisionableRole = 'student' | 'teacher' | 'parent';
+/**
+ * `administrator` is provisionable, but only by the founding administrator —
+ * the Edge Function refuses it for anybody else, and so does
+ * `user_roles_insert_admin`. Listing it here does not grant it.
+ */
+export type ProvisionableRole = 'student' | 'teacher' | 'parent' | 'administrator';
 
 export interface CreateUserInput {
   role: ProvisionableRole;
@@ -44,6 +49,9 @@ export interface CreateUserInput {
   dateOfBirth?: string | null;
   /** Best effort; silently skipped when the deployment has no mail provider. */
   sendWelcomeEmail?: boolean;
+
+  /** Administrator grants only. Ignored for every other role. */
+  capabilities?: string[];
 
   student?: {
     admissionNumber?: string | null;

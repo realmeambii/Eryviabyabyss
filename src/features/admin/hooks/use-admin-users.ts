@@ -6,6 +6,7 @@ import type { MutationMeta } from '@/shared/lib/query-client';
 import { queryKeys } from '@/shared/lib/query-keys';
 
 import * as usersApi from '../api/users.service';
+import type { ProvisionableRole } from '../api/users.service';
 
 /**
  * Admin people hooks.
@@ -71,11 +72,12 @@ export function useStudentOptions(enabled = true) {
 
 // ── Provisioning ────────────────────────────────────────────────────────────
 
-const ROLE_NOUN = {
+const ROLE_NOUN: Record<ProvisionableRole, string> = {
   student: 'Student',
   teacher: 'Teacher',
   parent: 'Parent',
-} as const;
+  administrator: 'Administrator',
+};
 
 export function useUserProvisioning() {
   const invalidate = useInvalidatePeople();

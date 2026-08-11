@@ -70,6 +70,9 @@ const ParentChildrenPage = lazy(() => import('@/features/parent/pages/parent-chi
 const AdminDashboard = lazy(() => import('@/features/admin/pages/admin-dashboard'));
 const AdminStudentsPage = lazy(() => import('@/features/admin/pages/admin-students-page'));
 const AdminTeachersPage = lazy(() => import('@/features/admin/pages/admin-teachers-page'));
+const AdminAdministratorsPage = lazy(
+  () => import('@/features/admin/pages/admin-administrators-page'),
+);
 const AdminParentsPage = lazy(() => import('@/features/admin/pages/admin-parents-page'));
 const AdminSubjectsPage = lazy(() => import('@/features/admin/pages/admin-subjects-page'));
 const AdminSessionsPage = lazy(() => import('@/features/admin/pages/admin-sessions-page'));
@@ -196,6 +199,7 @@ export function AppRoutes() {
                 <Route path="students" element={<AdminStudentsPage />} />
                 <Route path="teachers" element={<AdminTeachersPage />} />
                 <Route path="parents" element={<AdminParentsPage />} />
+                <Route path="administrators" element={<AdminAdministratorsPage />} />
                 <Route path="classes" element={<AdminClassesPage />} />
                 <Route path="subjects" element={<AdminSubjectsPage />} />
                 <Route path="sessions" element={<AdminSessionsPage />} />

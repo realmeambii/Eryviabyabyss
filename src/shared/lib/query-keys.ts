@@ -67,6 +67,13 @@ export const queryKeys = {
       [...queryKeys.teachers.all, 'analytics', sessionId, [...classIds].sort().join(',')] as const,
   },
 
+  administrators: {
+    all: ['administrators'] as const,
+    list: () => [...queryKeys.administrators.all, 'list'] as const,
+    /** The caller's own capabilities — gates navigation, not access. */
+    mine: () => [...queryKeys.administrators.all, 'mine'] as const,
+  },
+
   parents: {
     all: ['parents'] as const,
     detail: (parentId: string) => [...queryKeys.parents.all, 'detail', parentId] as const,

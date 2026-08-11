@@ -27,7 +27,20 @@ export interface NavItem {
   /** Match child routes too (`/student/assignments/:id` lights up Assignments). */
   end?: boolean;
   badgeKey?: 'notifications';
+  /**
+   * The administrator capability this destination is *about*.
+   *
+   * Still a convenience and not a permission model — the policies decide, and
+   * an administrator without the capability can reach the page and read it.
+   * What this removes is a menu entry to a screen whose every button would be
+   * refused. Items with no capability are shown to every administrator.
+   */
+  capability?: AdminCapability;
 }
+
+/** Mirrors `user_roles_known_capabilities`. */
+export type AdminCapability =
+  'users' | 'academics' | 'timetable' | 'results' | 'announcements' | 'audit' | 'settings';
 
 export interface NavSection {
   label?: string;
@@ -124,25 +137,31 @@ export const NAVIGATION: Record<AppRole, NavSection[]> = {
     {
       items: [
         { label: 'Dashboard', to: '/admin', icon: LayoutDashboard, end: true },
-        { label: 'Students', to: '/admin/students', icon: GraduationCap },
-        { label: 'Teachers', to: '/admin/teachers', icon: Users },
-        { label: 'Parents', to: '/admin/parents', icon: UsersRound },
+        { label: 'Students', to: '/admin/students', icon: GraduationCap, capability: 'users' },
+        { label: 'Teachers', to: '/admin/teachers', icon: Users, capability: 'users' },
+        { label: 'Parents', to: '/admin/parents', icon: UsersRound, capability: 'users' },
+        { label: 'Administrators', to: '/admin/administrators', icon: ShieldCheck },
       ],
     },
     {
       label: 'Academics',
       items: [
-        { label: 'Classes', to: '/admin/classes', icon: Library },
-        { label: 'Subjects', to: '/admin/subjects', icon: BookOpen },
-        { label: 'Sessions', to: '/admin/sessions', icon: CalendarRange },
-        { label: 'Timetable', to: '/admin/timetable', icon: CalendarDays },
-        { label: 'Results', to: '/admin/grades', icon: FileSpreadsheet },
+        { label: 'Classes', to: '/admin/classes', icon: Library, capability: 'academics' },
+        { label: 'Subjects', to: '/admin/subjects', icon: BookOpen, capability: 'academics' },
+        { label: 'Sessions', to: '/admin/sessions', icon: CalendarRange, capability: 'academics' },
+        { label: 'Timetable', to: '/admin/timetable', icon: CalendarDays, capability: 'timetable' },
+        { label: 'Results', to: '/admin/grades', icon: FileSpreadsheet, capability: 'results' },
       ],
     },
     {
       label: 'School',
       items: [
-        { label: 'Announcements', to: '/admin/announcements', icon: Megaphone },
+        {
+          label: 'Announcements',
+          to: '/admin/announcements',
+          icon: Megaphone,
+          capability: 'announcements',
+        },
         { label: 'Messages', to: '/admin/messages', icon: MessagesSquare },
         {
           label: 'Notifications',
@@ -150,7 +169,7 @@ export const NAVIGATION: Record<AppRole, NavSection[]> = {
           icon: BellRing,
           badgeKey: 'notifications',
         },
-        { label: 'Audit log', to: '/admin/audit', icon: ShieldCheck },
+        { label: 'Audit log', to: '/admin/audit', icon: ShieldCheck, capability: 'audit' },
       ],
     },
   ],

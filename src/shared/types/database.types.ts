@@ -2183,33 +2183,39 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          capabilities: string[]
           created_at: string
           expires_at: string | null
           granted_at: string
           granted_by: string | null
           id: string
+          is_super: boolean
           role_id: string
           school_id: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          capabilities?: string[]
           created_at?: string
           expires_at?: string | null
           granted_at?: string
           granted_by?: string | null
           id?: string
+          is_super?: boolean
           role_id: string
           school_id: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          capabilities?: string[]
           created_at?: string
           expires_at?: string | null
           granted_at?: string
           granted_by?: string | null
           id?: string
+          is_super?: boolean
           role_id?: string
           school_id?: string
           updated_at?: string
@@ -2348,6 +2354,20 @@ export type Database = {
           title: string
         }[]
       }
+      list_administrators: {
+        Args: never
+        Returns: {
+          avatar_path: string
+          capabilities: string[]
+          email: string
+          full_name: string
+          grant_id: string
+          granted_at: string
+          is_super: boolean
+          status: Database["public"]["Enums"]["user_status"]
+          user_id: string
+        }[]
+      }
       list_correspondents: {
         Args: never
         Returns: {
@@ -2358,6 +2378,13 @@ export type Database = {
         }[]
       }
       mark_all_notifications_read: { Args: never; Returns: number }
+      my_admin_capabilities: {
+        Args: never
+        Returns: {
+          capabilities: string[]
+          is_super: boolean
+        }[]
+      }
       provision_user_role: {
         Args: { p_role: string; p_school_id: string; p_user_id: string }
         Returns: undefined

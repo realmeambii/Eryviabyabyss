@@ -40,17 +40,36 @@ import { adminClient, currentUser } from '../_shared/supabase.ts';
 // ── Payloads ────────────────────────────────────────────────────────────────
 
 /**
- * Administrators are deliberately absent.
+ * Administrators are provisionable, but only by the founder.
  *
  * `handle_new_user()` will honour any role slug it finds in app_metadata, so
- * nothing in the database stops this function minting another administrator —
- * which is exactly why the gate belongs here. A stolen admin session should be
- * able to enrol a student, not quietly grant itself a second permanent account
- * that survives the first one being locked. Adding an administrator stays a
- * deliberate act performed against the database directly.
+ * nothing in the database stops this function minting an administrator — which
+ * is exactly why the gate belongs here. It used to be a flat refusal, on the
+ * reasoning that a stolen admin session should not be able to grant itself a
+ * second permanent account that survives the first being locked.
+ *
+ * That reasoning still holds for a sub-administrator, and still applies to
+ * them: `requireSuperAdmin` below is what a stolen *sub*-admin session runs
+ * into. What changed is that administrators are no longer peers. One grant per
+ * school is `is_super`, and it is the only one that may create another
+ * administrator — the same rule `user_roles_insert_admin` enforces in the
+ * database, restated here because this path runs under the service role and
+ * meets no policy at all.
  */
-const PROVISIONABLE_ROLES = ['student', 'teacher', 'parent'] as const;
+const PROVISIONABLE_ROLES = ['student', 'teacher', 'parent', 'administrator'] as const;
 type ProvisionableRole = (typeof PROVISIONABLE_ROLES)[number];
+
+/** Mirrors `user_roles_known_capabilities`. A value outside it is rejected. */
+const CAPABILITIES = [
+  'users',
+  'academics',
+  'timetable',
+  'results',
+  'announcements',
+  'audit',
+  'settings',
+] as const;
+type Capability = (typeof CAPABILITIES)[number];
 
 const GENDERS = ['male', 'female', 'other', 'undisclosed'] as const;
 const EMPLOYMENT_TYPES = ['full_time', 'part_time', 'contract', 'visiting'] as const;
@@ -68,6 +87,13 @@ interface CreatePayload {
   dateOfBirth?: string | null;
   /** Best effort. Silently skipped when no mail provider is configured. */
   sendWelcomeEmail?: boolean;
+
+  /**
+   * Administrator grants only. Ignored for every other role — a capability on a
+   * pupil's grant would mean nothing to any policy and would only mislead
+   * whoever read the row next.
+   */
+  capabilities?: Capability[];
 
   student?: {
     admissionNumber?: string | null;
@@ -175,6 +201,24 @@ interface Caller {
   userId: string;
   schoolId: string;
   fullName: string;
+  /** The founding administrator. The only one who may touch another admin. */
+  isSuper: boolean;
+  /** The capabilities on their grant. Empty for a founder, who holds all. */
+  capabilities: string[];
+}
+
+/**
+ * Whether the caller holds a capability.
+ *
+ * This handler runs under the service role, which meets no RLS policy at all —
+ * so `app.admin_can()` never gets a chance to refuse anything here and the
+ * check has to be made in TypeScript. Skipping it is not a cosmetic gap: an
+ * exams officer with `results` and nothing else was able to create a teacher
+ * account through this endpoint while every equivalent write over PostgREST
+ * was refused.
+ */
+function can(caller: Caller, capability: string): boolean {
+  return caller.isSuper || caller.capabilities.includes(capability);
 }
 
 /**
@@ -198,7 +242,7 @@ async function resolveAdministrator(userId: string): Promise<Caller | null> {
 
   const { data: grants } = await admin
     .from('user_roles')
-    .select('expires_at, roles!inner(slug)')
+    .select('expires_at, is_super, capabilities, roles!inner(slug)')
     .eq('user_id', userId)
     .eq('school_id', profile.school_id)
     .eq('roles.slug', 'administrator');
@@ -213,10 +257,24 @@ async function resolveAdministrator(userId: string): Promise<Caller | null> {
 
   if (!live) return null;
 
+  const isSuper = (grants ?? []).some(
+    (grant) =>
+      grant.is_super === true &&
+      (grant.expires_at === null || new Date(grant.expires_at as string).getTime() > now),
+  );
+
+  const capabilities = (grants ?? []).flatMap((grant) =>
+    grant.expires_at === null || new Date(grant.expires_at as string).getTime() > now
+      ? ((grant.capabilities as string[] | null) ?? [])
+      : [],
+  );
+
   return {
     userId,
     schoolId: profile.school_id as string,
     fullName: (profile.full_name as string) ?? 'An administrator',
+    isSuper,
+    capabilities,
   };
 }
 
@@ -251,21 +309,40 @@ async function resolveTarget(
     return { ok: false, reason: 'That account could not be found.' };
   }
 
-  // Not scoped to a school, and not `.maybeSingle()`: an administrator of any
-  // school is off limits, and a user holding the grant in two of them must not
-  // turn this check into a "multiple rows returned" error that never fires.
+  // Not scoped to a school, and not `.maybeSingle()`: a user holding the grant
+  // in two schools must not turn this check into a "multiple rows returned"
+  // error that never fires.
   const { data: adminGrants } = await admin
     .from('user_roles')
-    .select('id, roles!inner(slug)')
+    .select('id, is_super, roles!inner(slug)')
     .eq('user_id', userId)
     .eq('roles.slug', 'administrator');
 
-  if ((adminGrants ?? []).length > 0) {
-    return {
-      ok: false,
-      reason:
-        'Administrator accounts cannot be managed from here. Use the password-reset link on the sign-in page.',
-    };
+  const grants = adminGrants ?? [];
+
+  if (grants.length > 0) {
+    // The founder outranks a sub-administrator, so they may reset one's
+    // password or deactivate it — otherwise a sub-administrator's account could
+    // never be closed, which makes the whole scheme one-way.
+    //
+    // Everything else stays refused. A sub-administrator acting on a peer would
+    // turn one compromised session into control of the school, which is the
+    // original reason this check exists; and nobody at all may act on the
+    // founder, whose account is the school's last way back in.
+    if (!caller.isSuper) {
+      return {
+        ok: false,
+        reason: 'Only the founding administrator can manage another administrator account.',
+      };
+    }
+
+    if (grants.some((grant) => grant.is_super === true)) {
+      return {
+        ok: false,
+        reason:
+          'The founding administrator cannot be managed from here. Use the password-reset link on the sign-in page.',
+      };
+    }
   }
 
   return {
@@ -340,6 +417,10 @@ function validateCreate(payload: CreatePayload): string | null {
     }
   }
 
+  for (const capability of payload.capabilities ?? []) {
+    if (!CAPABILITIES.includes(capability)) return `${capability} is not a known capability`;
+  }
+
   return null;
 }
 
@@ -350,6 +431,16 @@ async function handleCreate(
 ): Promise<Response> {
   const invalid = validateCreate(payload);
   if (invalid) return error(request, invalid, 422);
+
+  if (!can(caller, 'users')) {
+    return error(request, 'You do not have permission to create accounts.', 403);
+  }
+
+  // Restated here rather than left to RLS: this whole handler runs under the
+  // service role, which meets no policy at all.
+  if (payload.role === 'administrator' && !caller.isSuper) {
+    return error(request, 'Only the founding administrator can create another administrator.', 403);
+  }
 
   const admin = adminClient();
   const email = text(payload.email)!.toLowerCase();
@@ -408,6 +499,21 @@ async function handleCreate(
     });
 
     if (provisionError) throw new Error(provisionError.message);
+
+    // Capabilities are a second statement rather than an argument to
+    // `provision_user_role()`, which is shared with the sign-up path and has no
+    // business knowing about them. `is_super` is never set here: a school has
+    // exactly one founder, decided at migration time, and nothing on this path
+    // may mint a second.
+    if (payload.role === 'administrator') {
+      const { error: capabilityError } = await admin
+        .from('user_roles')
+        .update({ capabilities: payload.capabilities ?? [] })
+        .eq('user_id', userId)
+        .eq('school_id', caller.schoolId);
+
+      if (capabilityError) throw new Error(capabilityError.message);
+    }
 
     await applyProfileExtras(payload, userId);
     await applyRoleExtension(payload, userId, caller.schoolId);
@@ -475,6 +581,12 @@ async function applyRoleExtension(
   schoolId: string,
 ): Promise<void> {
   const admin = adminClient();
+
+  // An administrator has no extension row and needs none — the profile and the
+  // grant are the whole record. Falling through here landed on the guardian
+  // branch and failed with "the parent record could not be created", which is
+  // both wrong and unhelpful.
+  if (payload.role === 'administrator') return;
 
   if (payload.role === 'student') {
     const input = payload.student ?? {};
@@ -689,6 +801,10 @@ async function handleResetPassword(
 ): Promise<Response> {
   if (!UUID_PATTERN.test(payload.userId ?? '')) return error(request, 'userId is required', 422);
 
+  if (!can(caller, 'users')) {
+    return error(request, 'You do not have permission to manage accounts.', 403);
+  }
+
   const mode = payload.mode ?? 'email';
   // Checked rather than defaulted. An unrecognised mode falling through to the
   // `else` would quietly pick the branch that mints a credential — the more
@@ -786,6 +902,10 @@ async function handleSetStatus(
   if (!UUID_PATTERN.test(payload.userId ?? '')) return error(request, 'userId is required', 422);
   if (payload.status !== 'active' && payload.status !== 'suspended') {
     return error(request, "status must be 'active' or 'suspended'", 422);
+  }
+
+  if (!can(caller, 'users')) {
+    return error(request, 'You do not have permission to manage accounts.', 403);
   }
 
   const target = await resolveTarget(payload.userId, caller);
