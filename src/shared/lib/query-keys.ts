@@ -67,6 +67,13 @@ export const queryKeys = {
       [...queryKeys.teachers.all, 'analytics', sessionId, [...classIds].sort().join(',')] as const,
   },
 
+  admin: {
+    all: ['admin'] as const,
+    /** The office's read-only view of what has been set across the school. */
+    coursework: (sessionId: string, filters?: Record<string, unknown>) =>
+      [...queryKeys.admin.all, 'coursework', sessionId, filters ?? {}] as const,
+  },
+
   administrators: {
     all: ['administrators'] as const,
     list: () => [...queryKeys.administrators.all, 'list'] as const,
@@ -78,6 +85,16 @@ export const queryKeys = {
     all: ['parents'] as const,
     detail: (parentId: string) => [...queryKeys.parents.all, 'detail', parentId] as const,
     children: (parentId: string) => [...queryKeys.parents.all, parentId, 'children'] as const,
+    /**
+     * Keyed on the child rather than the guardian, so switching between
+     * siblings swaps a cache entry instead of refetching the same rows.
+     */
+    child: (studentId: string, sessionId: string) =>
+      [...queryKeys.parents.all, 'child', studentId, sessionId] as const,
+    work: (studentId: string, classId: string) =>
+      [...queryKeys.parents.all, 'child', studentId, 'work', classId] as const,
+    quizzes: (studentId: string, classId: string) =>
+      [...queryKeys.parents.all, 'child', studentId, 'quizzes', classId] as const,
   },
 
   classes: {
@@ -194,6 +211,8 @@ export const queryKeys = {
     all: ['audit'] as const,
     list: (filters?: Record<string, unknown>) =>
       [...queryKeys.audit.all, 'list', filters ?? {}] as const,
+    /** The record types that actually appear, for the filter. */
+    entityTypes: () => [...queryKeys.audit.all, 'entity-types'] as const,
   },
 
   /**

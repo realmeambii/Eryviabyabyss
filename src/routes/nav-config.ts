@@ -114,6 +114,8 @@ export const NAVIGATION: Record<AppRole, NavSection[]> = {
       items: [
         { label: 'Dashboard', to: '/parent', icon: LayoutDashboard, end: true },
         { label: 'My children', to: '/parent/children', icon: UsersRound },
+        { label: 'Assignments', to: '/parent/assignments', icon: ClipboardList },
+        { label: 'Tests & quizzes', to: '/parent/quizzes', icon: ClipboardCheck },
         { label: 'Results', to: '/parent/grades', icon: FileSpreadsheet },
         { label: 'Timetable', to: '/parent/timetable', icon: CalendarDays },
       ],

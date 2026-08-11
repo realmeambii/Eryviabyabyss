@@ -1,7 +1,6 @@
-import { ClipboardList } from 'lucide-react';
-
+import { AdminCourseworkPage } from '@/features/admin';
 import { useAuth } from '@/features/auth';
-import { ModulePlaceholder } from '@/shared/components/module-placeholder';
+import { ParentAssignmentsPage } from '@/features/parent';
 
 import StudentAssignmentsPage from './student-assignments-page';
 import TeacherAssignmentsPage from './teacher-assignments-page';
@@ -10,28 +9,16 @@ import TeacherAssignmentsPage from './teacher-assignments-page';
  * `/…/assignments` is a shared route across all four portals, so this dispatches
  * on role rather than duplicating the path four times in the router.
  *
- * Student and teacher views are implemented. Parent keeps its placeholder
- * until that phase, which is honest about what exists rather than showing a
- * guardian a teacher's marking board.
+ * Four different questions about the same table: a pupil asks what they owe, a
+ * teacher what they must mark, a guardian what their child has not handed in,
+ * and the office which classes have had nothing set.
  */
 export default function AssignmentsPage() {
-  const { isStudent, isTeacher } = useAuth();
+  const { isStudent, isTeacher, isParent } = useAuth();
 
   if (isStudent) return <StudentAssignmentsPage />;
   if (isTeacher) return <TeacherAssignmentsPage />;
+  if (isParent) return <ParentAssignmentsPage />;
 
-  return (
-    <ModulePlaceholder
-      icon={ClipboardList}
-      title="Assignments"
-      description="Set work, collect submissions and return marks."
-      planned={['Parent: read-only view of a child’s work and results']}
-      dataLayer={[
-        'assignments',
-        'assignment_submissions',
-        'app.enforce_submission_rules()',
-        'app.sync_grade_from_submission()',
-      ]}
-    />
-  );
+  return <AdminCourseworkPage kind="assignments" />;
 }

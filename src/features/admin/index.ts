@@ -52,6 +52,19 @@ export {
 } from './api/classes.service';
 
 export {
+  auditToCsv,
+  describeChange,
+  listAuditEntityTypes,
+  listAuditEntries,
+  type AuditAction,
+  type AuditEntry,
+  type AuditFilters,
+} from './api/audit.service';
+
+export { listCoursework, type CourseworkRow } from './api/coursework.service';
+export { useCoursework } from './hooks/use-coursework';
+
+export {
   CAPABILITIES,
   CAPABILITY_LABEL,
   getMyCapabilities,
@@ -83,7 +96,9 @@ export {
 } from './hooks/use-admin-academics';
 
 export { default as AdminAdministratorsPage } from './pages/admin-administrators-page';
+export { default as AdminAuditPage } from './pages/admin-audit-page';
 export { default as AdminClassesPage } from './pages/admin-classes-page';
+export { default as AdminCourseworkPage } from './pages/admin-coursework-page';
 export { default as AdminDashboard } from './pages/admin-dashboard';
 export { default as AdminParentsPage } from './pages/admin-parents-page';
 export { default as AdminStudentsPage } from './pages/admin-students-page';

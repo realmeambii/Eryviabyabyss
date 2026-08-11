@@ -88,7 +88,7 @@ const QuizzesPage = lazy(() => import('@/features/quizzes/pages/quizzes-page'));
 const NotificationsPage = lazy(() => import('@/features/notifications/pages/notifications-page'));
 const AnnouncementsPage = lazy(() => import('@/features/announcements/pages/announcements-page'));
 const MessagesPage = lazy(() => import('@/features/messages/pages/messages-page'));
-const AuditPage = lazy(() => import('@/routes/pages/audit-page'));
+const AuditPage = lazy(() => import('@/features/admin/pages/admin-audit-page'));
 
 // ── System ──────────────────────────────────────────────────────────────────
 const ForbiddenPage = lazy(() => import('@/routes/pages/forbidden-page'));
@@ -204,6 +204,7 @@ export function AppRoutes() {
                 <Route path="subjects" element={<AdminSubjectsPage />} />
                 <Route path="sessions" element={<AdminSessionsPage />} />
                 <Route path="audit" element={<AuditPage />} />
+                <Route path="quizzes" element={<QuizzesPage />} />
               </>,
             )}
 
