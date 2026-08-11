@@ -1642,6 +1642,50 @@ export type Database = {
         }
         Relationships: []
       }
+      school_periods: {
+        Row: {
+          created_at: string
+          ends_at: string
+          id: string
+          is_break: boolean
+          label: string | null
+          position: number
+          school_id: string
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at: string
+          id?: string
+          is_break?: boolean
+          label?: string | null
+          position: number
+          school_id: string
+          starts_at: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string
+          id?: string
+          is_break?: boolean
+          label?: string | null
+          position?: number
+          school_id?: string
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_periods_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schools: {
         Row: {
           address_line1: string | null
@@ -2040,6 +2084,7 @@ export type Database = {
       timetable_slots: {
         Row: {
           academic_session_id: string
+          claimed_by: string | null
           class_id: string
           created_at: string
           day_of_week: number
@@ -2057,6 +2102,7 @@ export type Database = {
         }
         Insert: {
           academic_session_id: string
+          claimed_by?: string | null
           class_id: string
           created_at?: string
           day_of_week: number
@@ -2074,6 +2120,7 @@ export type Database = {
         }
         Update: {
           academic_session_id?: string
+          claimed_by?: string | null
           class_id?: string
           created_at?: string
           day_of_week?: number
@@ -2095,6 +2142,13 @@ export type Database = {
             columns: ["academic_session_id"]
             isOneToOne: false
             referencedRelation: "academic_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_claimed_by_fkey"
+            columns: ["claimed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -2388,6 +2442,22 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      timetable_availability: {
+        Args: { p_class_id: string; p_session_id: string }
+        Returns: {
+          claimed_by_me: boolean
+          day_of_week: number
+          ends_at: string
+          is_break: boolean
+          period_id: string
+          period_position: number
+          slot_id: string
+          starts_at: string
+          taken_by_me: boolean
+          taken_subject: string
+          teacher_busy: boolean
+        }[]
       }
     }
     Enums: {

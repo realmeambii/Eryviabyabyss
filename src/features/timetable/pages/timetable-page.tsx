@@ -1,33 +1,23 @@
-import { CalendarDays } from 'lucide-react';
-
 import { useAuth } from '@/features/auth';
-import { ModulePlaceholder } from '@/shared/components/module-placeholder';
 
+import AdminTimetablePage from './admin-timetable-page';
+import ParentTimetablePage from './parent-timetable-page';
 import StudentTimetablePage from './student-timetable-page';
 import TeacherTimetablePage from './teacher-timetable-page';
 
-/** Shared `/…/timetable` route. Student and teacher views are live. */
+/**
+ * Shared `/…/timetable` route.
+ *
+ * Four views of one table, dispatched on role rather than repeated four times
+ * in the router. A pupil and their guardian read the same grid; a teacher reads
+ * their own week across classes; the office edits.
+ */
 export default function TimetablePage() {
-  const { isStudent, isTeacher } = useAuth();
+  const { isStudent, isTeacher, isParent } = useAuth();
 
   if (isStudent) return <StudentTimetablePage />;
   if (isTeacher) return <TeacherTimetablePage />;
+  if (isParent) return <ParentTimetablePage />;
 
-  return (
-    <ModulePlaceholder
-      icon={CalendarDays}
-      title="Timetable"
-      description="The weekly grid, per class and per teacher."
-      planned={[
-        'Administrator: drag-to-move editor with live clash detection',
-        'Parent: a child’s week',
-        'Room allocation and export to calendar',
-      ]}
-      dataLayer={[
-        'timetable_slots',
-        'timetable_slots_no_class_clash',
-        'timetable_slots_no_teacher_clash',
-      ]}
-    />
-  );
+  return <AdminTimetablePage />;
 }

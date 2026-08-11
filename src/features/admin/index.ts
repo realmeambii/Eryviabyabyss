@@ -53,8 +53,13 @@ export {
 
 export {
   useAssignableTeachers,
+  useClassMutations,
   useClassTeaching,
   useClasses,
+  useSessionMutations,
+  useSessions,
+  useSubjectMutations,
+  useSubjects,
   useTeachingMutations,
 } from './hooks/use-admin-academics';
 

@@ -1,12 +1,13 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, CalendarPlus, Undo2 } from 'lucide-react';
 
 import { useMyTimetable, useTeacherScope } from '@/features/teacher';
 import { EmptyState } from '@/shared/components/empty-state';
 import { PageHeader } from '@/shared/components/page-header';
 import { SubjectBadge } from '@/shared/components/subject-badge';
 import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { WEEKDAYS } from '@/shared/lib/constants';
@@ -14,6 +15,8 @@ import { cn } from '@/shared/utils/cn';
 import { className as formatClassName, formatTime } from '@/shared/utils/format';
 
 import { byWeekday, currentSlot } from '../api/timetable.service';
+import { ClaimPeriodDialog } from '../components/claim-period-dialog';
+import { useClaimMutations } from '../hooks/use-timetable';
 
 /**
  * A teacher's week, across every class they take.
@@ -29,6 +32,8 @@ import { byWeekday, currentSlot } from '../api/timetable.service';
 export default function TeacherTimetablePage() {
   const scope = useTeacherScope();
   const timetable = useMyTimetable();
+  const [claiming, setClaiming] = useState(false);
+  const { release } = useClaimMutations(undefined);
 
   const slots = useMemo(() => timetable.data ?? [], [timetable.data]);
   const grouped = useMemo(() => byWeekday(slots), [slots]);
@@ -57,7 +62,21 @@ export default function TeacherTimetablePage() {
             ? 'Your week, period by period.'
             : `${slots.filter((slot) => !slot.is_break).length} periods · ${Math.round(teachingMinutes / 60)} hours a week`
         }
+        actions={
+          scope.isUnassigned ? null : (
+            <Button
+              onClick={() => {
+                setClaiming(true);
+              }}
+            >
+              <CalendarPlus className="size-4" aria-hidden />
+              Claim a period
+            </Button>
+          )
+        }
       />
+
+      <ClaimPeriodDialog open={claiming} onOpenChange={setClaiming} />
 
       {timetable.isPending || scope.isPending ? (
         <div className="grid gap-4 lg:grid-cols-5">
@@ -72,7 +91,7 @@ export default function TeacherTimetablePage() {
           description={
             scope.isUnassigned
               ? 'You have no classes this term, so there is nothing to timetable.'
-              : 'An administrator has not put your classes on the timetable yet.'
+              : 'Nothing has been timetabled for you yet. You can claim free periods for the classes you teach — first come, first served.'
           }
         />
       ) : (
@@ -159,6 +178,25 @@ export default function TeacherTimetablePage() {
                                 )}
                                 {slot.room ? ` · ${slot.room}` : ''}
                               </p>
+
+                              {/* Only a period they took themselves can be given
+                                  back. One the office timetabled carries no
+                                  release, because the delete policy would refuse
+                                  it and an offered button that always fails is
+                                  worse than no button. */}
+                              {slot.claimed_by ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    release.mutate(slot.id);
+                                  }}
+                                  disabled={release.isPending}
+                                  className="flex cursor-pointer items-center gap-1 text-[11.5px] text-ink-3 transition-colors hover:text-danger disabled:opacity-50"
+                                >
+                                  <Undo2 className="size-3" aria-hidden />
+                                  Release
+                                </button>
+                              ) : null}
                             </CardContent>
                           </Card>
                         </li>

@@ -139,6 +139,12 @@ export const queryKeys = {
     all: ['timetable'] as const,
     forClass: (classId: string) => [...queryKeys.timetable.all, 'class', classId] as const,
     forTeacher: (teacherId: string) => [...queryKeys.timetable.all, 'teacher', teacherId] as const,
+    /** The school's bell schedule — every grid is drawn against it. */
+    periods: (schoolId: string) => [...queryKeys.timetable.all, 'periods', schoolId] as const,
+    availability: (classId: string, sessionId: string) =>
+      [...queryKeys.timetable.all, 'availability', classId, sessionId] as const,
+    eligibleTeachers: (classId: string, subjectId: string) =>
+      [...queryKeys.timetable.all, 'eligible', classId, subjectId] as const,
   },
 
   announcements: {
