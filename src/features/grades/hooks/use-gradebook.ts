@@ -5,6 +5,7 @@ import { useCurrentUser } from '@/features/auth';
 import { queryKeys } from '@/shared/lib/query-keys';
 
 import * as api from '../api/grades.service';
+import * as resultsApi from '../api/results.service';
 
 /**
  * Teacher gradebook hooks.
@@ -113,4 +114,67 @@ export function useGradeMutations() {
   });
 
   return { record, update, remove, setPublished, importCsv };
+}
+
+// ── School-wide results ─────────────────────────────────────────────────────
+
+export function useSchoolResults(filters: {
+  classId?: string;
+  subjectId?: string;
+  enabled?: boolean;
+}) {
+  const { currentSession } = useCurrentUser();
+
+  return useQuery({
+    queryKey: queryKeys.grades.school(currentSession?.id ?? 'none', {
+      classId: filters.classId,
+      subjectId: filters.subjectId,
+    }),
+    queryFn: () =>
+      resultsApi.getSchoolResults({
+        sessionId: currentSession!.id,
+        classId: filters.classId,
+        subjectId: filters.subjectId,
+      }),
+    enabled: (filters.enabled ?? true) && Boolean(currentSession?.id),
+    staleTime: 60_000,
+  });
+}
+
+export function useReportCards(classId: string | undefined) {
+  const { currentSession } = useCurrentUser();
+
+  return useQuery({
+    queryKey: queryKeys.grades.reportCards(classId ?? 'none', currentSession?.id ?? 'none'),
+    queryFn: () => resultsApi.getReportCards({ classId: classId!, sessionId: currentSession!.id }),
+    enabled: Boolean(classId && currentSession?.id),
+    staleTime: 60_000,
+  });
+}
+
+/**
+ * Publish or withhold in bulk.
+ *
+ * Publication is what a pupil's `grades_select` policy turns on, so this is a
+ * real action with a real audience — not a display flag. The confirmation says
+ * how many rows and to whom.
+ */
+export function useResultPublication() {
+  const invalidate = useInvalidateGrades();
+
+  const publish = useMutation({
+    mutationFn: ({ ids, published }: { ids: string[]; published: boolean }) =>
+      api.setGradesPublished(ids, published),
+    onSuccess: (_result, variables) => {
+      const count = variables.ids.length;
+      toast.success(
+        variables.published
+          ? `${count} ${count === 1 ? 'result is' : 'results are'} now visible to pupils and guardians.`
+          : `${count} ${count === 1 ? 'result' : 'results'} withheld. Pupils can no longer see ${count === 1 ? 'it' : 'them'}.`,
+      );
+      invalidate();
+    },
+  });
+
+  return { publish };
 }

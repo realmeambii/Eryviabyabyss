@@ -140,6 +140,11 @@ export const queryKeys = {
       [...queryKeys.grades.all, 'student', studentId, sessionId ?? null] as const,
     forClass: (classId: string, subjectId?: string) =>
       [...queryKeys.grades.all, 'class', classId, subjectId ?? null] as const,
+    /** The office's whole-school view, filtered. */
+    school: (sessionId: string, filters?: Record<string, unknown>) =>
+      [...queryKeys.grades.all, 'school', sessionId, filters ?? {}] as const,
+    reportCards: (classId: string, sessionId: string) =>
+      [...queryKeys.grades.all, 'reports', classId, sessionId] as const,
   },
 
   timetable: {

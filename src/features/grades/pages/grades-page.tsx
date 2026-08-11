@@ -1,29 +1,23 @@
-import { FileSpreadsheet } from 'lucide-react';
-
 import { useAuth } from '@/features/auth';
-import { ModulePlaceholder } from '@/shared/components/module-placeholder';
 
+import AdminResultsPage from './admin-results-page';
+import ParentResultsPage from './parent-results-page';
 import StudentGradesPage from './student-grades-page';
 import TeacherGradebookPage from './teacher-gradebook-page';
 
-/** Shared `/…/grades` route. Student and teacher views are live. */
+/**
+ * Shared `/…/grades` route.
+ *
+ * Four views of one table. A pupil reads their own marks, a guardian reads
+ * their children's, a teacher edits one class at a time, and the office reads
+ * the school whole and decides what is published.
+ */
 export default function GradesPage() {
-  const { isStudent, isTeacher } = useAuth();
+  const { isStudent, isTeacher, isParent } = useAuth();
 
   if (isStudent) return <StudentGradesPage />;
   if (isTeacher) return <TeacherGradebookPage />;
+  if (isParent) return <ParentResultsPage />;
 
-  return (
-    <ModulePlaceholder
-      icon={FileSpreadsheet}
-      title="Gradebook"
-      description="Continuous assessment, tests and exams, banded against the school's scale."
-      planned={[
-        'Parent: results across all their children',
-        'Administrator: year-group and subject analysis',
-        'Printable end-of-term report cards',
-      ]}
-      dataLayer={['grades', 'app.apply_grade_band()', 'schools.grading_scale']}
-    />
-  );
+  return <AdminResultsPage />;
 }
