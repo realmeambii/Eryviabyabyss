@@ -11,6 +11,12 @@ import type { ReportCard } from '../api/results.service';
 /**
  * End-of-term report cards, one per pupil.
  *
+ * Every percentage on the card is shown to one decimal place. They were mixed —
+ * CA and exam to the whole number, the overall to a decimal — so a subject with
+ * no exam yet printed "CA 78%" beside "Overall 77.5%" for what is arithmetically
+ * the same figure. A parent reading two different numbers for one mark queries
+ * it, and the school has to explain rounding.
+ *
  * Printed with the browser rather than generated as a PDF. A school prints
  * these on headed paper in a back office on whatever machine is nearest, and
  * `window.print()` with a print stylesheet gets there with no dependency, no
@@ -135,12 +141,12 @@ export function ReportCards({
                       <td className="py-1.5 text-right text-ink-2 print:text-black">
                         {subject.caPercentage === null
                           ? '—'
-                          : formatPercent(subject.caPercentage, 0)}
+                          : formatPercent(subject.caPercentage, 1)}
                       </td>
                       <td className="py-1.5 text-right text-ink-2 print:text-black">
                         {subject.examPercentage === null
                           ? '—'
-                          : formatPercent(subject.examPercentage, 0)}
+                          : formatPercent(subject.examPercentage, 1)}
                       </td>
                       <td
                         className={cn(
