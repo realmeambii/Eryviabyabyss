@@ -1,9 +1,9 @@
 {
-  "name": "gnaschools-lms",
+  "name": "eryvia",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "GNASchools LMS — a production-grade Learning Management System for secondary schools, built on React 19 and Supabase.",
+  "description": "Eryvia by Abyss — a production-grade Learning Management System for secondary schools, built on React 19 and Supabase.",
   "engines": {
     "node": ">=20.19.0"
   },

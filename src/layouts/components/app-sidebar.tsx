@@ -71,7 +71,7 @@ export function AppSidebar({
         {open ? (
           <div className="flex min-w-0 flex-col gap-px">
             <span className="truncate text-sm font-extrabold tracking-tight text-ink">
-              {schoolName ?? 'GNASchools'}
+              {schoolName ?? 'Eryvia'}
             </span>
             <span className="truncate text-[10.5px] font-semibold tracking-wider text-ink-3 uppercase">
               {ROLE_LABEL[role]} portal
