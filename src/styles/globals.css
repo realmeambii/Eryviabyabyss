@@ -153,10 +153,10 @@
 
   /* ── Type ───────────────────────────────────────────────────────────── */
   --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  /* Wordmark only. Geometric, near-circular bowls, a single-storey `a` and a
-     straight-tailed `y` — the letterforms the mark is drawn in. Never used for
-     body copy. */
-  --font-display: 'Poppins', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  /* Wordmark only, never body copy. General Sans is a geometric grotesque —
+     the closest free face to the letterforms the mark is drawn in, and free for
+     commercial use, so nothing licensed has to live in this repository. */
+  --font-display: 'General Sans', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, 'JetBrains Mono', 'SFMono-Regular', Menlo, monospace;
 
   /* ── Radii ──────────────────────────────────────────────────────────── */
