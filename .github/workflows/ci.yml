@@ -129,9 +129,17 @@ jobs:
           supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
           supabase db push
 
+      # Every function in supabase/functions, so adding one cannot be forgotten
+      # here. `admin-users` was missing from this list for exactly that reason,
+      # which would have shipped a production with no way to create an account.
       - name: Deploy Edge Functions
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
-          supabase functions deploy send-notification-email --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
-          supabase functions deploy daily-reminders --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
+          for dir in supabase/functions/*/; do
+            name="$(basename "$dir")"
+            # `_shared` is a library the others import, not a function.
+            [ "${name#_}" = "$name" ] || continue
+            echo "Deploying $name"
+            supabase functions deploy "$name" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
+          done
