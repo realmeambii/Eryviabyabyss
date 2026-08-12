@@ -4,8 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useCurrentUser } from '@/features/auth';
 import { queryKeys } from '@/shared/lib/query-keys';
 
-import { foldClasses, foldSubjects, listMyAssignments } from '../api/teacher.service';
-import type { MyAssignment, MyClass, MySubject } from '../api/teacher.service';
+import { foldClasses, foldPairs, foldSubjects, listMyAssignments } from '../api/teacher.service';
+import type { MyAssignment, MyClass, MySubject, TeachingPair } from '../api/teacher.service';
 
 /**
  * The one query every teacher screen shares.
@@ -31,6 +31,14 @@ export interface TeacherScope {
   subjects: MySubject[];
   /** Class ids in scope. The filter every other teacher query is built on. */
   classIds: string[];
+  /**
+   * The (class, subject) pairs in scope.
+   *
+   * What anything to do with *marking* must filter on: reading a class is
+   * broader than marking a subject within it, and `classIds` alone would offer
+   * a teacher work that belongs to a colleague.
+   */
+  pairs: TeachingPair[];
   isPending: boolean;
   error: Error | null;
   /** True once we know the teacher has nothing assigned this term. */
@@ -54,6 +62,7 @@ export function useTeacherScope(): TeacherScope {
   const classes = useMemo(() => foldClasses(assignments), [assignments]);
   const subjects = useMemo(() => foldSubjects(assignments), [assignments]);
   const classIds = useMemo(() => classes.map((row) => row.id), [classes]);
+  const pairs = useMemo(() => foldPairs(assignments), [assignments]);
 
   return {
     teacherId: teacherId ?? null,
@@ -63,6 +72,7 @@ export function useTeacherScope(): TeacherScope {
     classes,
     subjects,
     classIds,
+    pairs,
     isPending: query.isPending,
     error: query.error,
     isUnassigned: !query.isPending && !query.error && assignments.length === 0,

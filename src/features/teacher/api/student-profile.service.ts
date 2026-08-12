@@ -35,13 +35,24 @@ export async function getStudentProfile(studentId: string): Promise<StudentProfi
     .from('students')
     .select(
       `id, admission_number, admission_date, status,
-       user:users!students_user_id_fkey (id, full_name, email, avatar_path, date_of_birth, gender),
+       user:users!students_user_id_fkey (id, full_name, email, avatar_path, gender),
        current_class:classes!students_current_class_id_fkey (id, name, arm)`,
     )
     .eq('id', studentId)
     .single();
 
   if (error) throw toAppError(error);
+
+  // Date of birth is revoked from `authenticated` on `public.users` and served
+  // by a definer RPC instead, so it arrives separately. A teacher is entitled
+  // to it for a pupil they teach; `app.may_read_contact()` decides, not this.
+  const { data: contact, error: contactError } = await supabase.rpc('contact_details', {
+    p_user_ids: [(data as unknown as { user: { id: string } | null }).user?.id].filter(
+      (id): id is string => Boolean(id),
+    ),
+  });
+
+  if (contactError) throw toAppError(contactError);
 
   const row = data as unknown as {
     id: string;
@@ -53,7 +64,6 @@ export async function getStudentProfile(studentId: string): Promise<StudentProfi
       full_name: string;
       email: string;
       avatar_path: string | null;
-      date_of_birth: string | null;
       gender: UserProfile['gender'];
     } | null;
     current_class: { id: string; name: string; arm: string } | null;
@@ -69,7 +79,7 @@ export async function getStudentProfile(studentId: string): Promise<StudentProfi
     status: row.status,
     admission_date: row.admission_date,
     current_class: row.current_class,
-    date_of_birth: row.user?.date_of_birth ?? null,
+    date_of_birth: contact?.[0]?.date_of_birth ?? null,
     gender: row.user?.gender ?? null,
   };
 }

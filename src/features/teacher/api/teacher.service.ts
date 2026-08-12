@@ -158,6 +158,60 @@ export function foldSubjects(assignments: MyAssignment[]): MySubject[] {
   return [...bySubject.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/** One thing this teacher may mark: a subject, in a class. */
+export interface TeachingPair {
+  classId: string;
+  subjectId: string;
+}
+
+/**
+ * The scope as pairs, deduplicated.
+ *
+ * `classIds` and `subjectIds` are the right shape for a picker, but they are
+ * the wrong shape for a filter: their cross-product includes combinations the
+ * teacher was never given. Taking Physics in SS 1A and Biology in SS 1B does
+ * not make Biology in SS 1A theirs, and `app.teaches_class_subject()` — which
+ * every write policy is built on — agrees.
+ */
+export function foldPairs(assignments: MyAssignment[]): TeachingPair[] {
+  const seen = new Set<string>();
+  const pairs: TeachingPair[] = [];
+
+  for (const assignment of assignments) {
+    const key = `${assignment.class_id}:${assignment.subject_id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    pairs.push({ classId: assignment.class_id, subjectId: assignment.subject_id });
+  }
+
+  return pairs;
+}
+
+/**
+ * The pairs as a PostgREST `or` filter over an embedded assignment or quiz.
+ *
+ * `or=(and(class_id.eq.…,subject_id.eq.…),…)` is the only way to say "these
+ * combinations" in one request — `in(classes)` plus `in(subjects)` says their
+ * cross-product, which is the thing being avoided.
+ */
+function pairFilter(pairs: TeachingPair[]): string {
+  return pairs
+    .map((pair) => `and(class_id.eq.${pair.classId},subject_id.eq.${pair.subjectId})`)
+    .join(',');
+}
+
+/** The pairs left after the screen's own class and subject pickers. */
+function narrowPairs(
+  pairs: TeachingPair[],
+  options: { classId?: string; subjectId?: string },
+): TeachingPair[] {
+  return pairs.filter(
+    (pair) =>
+      (!options.classId || pair.classId === options.classId) &&
+      (!options.subjectId || pair.subjectId === options.subjectId),
+  );
+}
+
 // ── Class roster ────────────────────────────────────────────────────────────
 
 export interface RosterStudent {
@@ -243,11 +297,20 @@ export interface TeacherWorkload {
  * instead of dragging a marking queue across the wire to call `.length` on it.
  *
  * Every count is already confined to this teacher by RLS, but each is also
- * filtered by the class ids in scope — an administrator opening this screen
- * would otherwise see the whole school's backlog under a teacher's heading.
+ * filtered by the scope — an administrator opening this screen would otherwise
+ * see the whole school's backlog under a teacher's heading.
+ *
+ * The two marking counts filter on the (class, subject) pairs rather than the
+ * class ids, because RLS lets a teacher *read* the work of any pupil they teach
+ * — including the subjects a colleague takes with that class — while only the
+ * subject's own teacher may mark it. Counting by class alone reports a backlog
+ * this teacher cannot clear.
  */
-export async function getWorkload(classIds: string[], sessionId: string): Promise<TeacherWorkload> {
-  if (classIds.length === 0) {
+export async function getWorkload(
+  pairs: TeachingPair[],
+  sessionId: string,
+): Promise<TeacherWorkload> {
+  if (pairs.length === 0) {
     return {
       pendingSubmissions: 0,
       attemptsAwaitingReview: 0,
@@ -256,17 +319,23 @@ export async function getWorkload(classIds: string[], sessionId: string): Promis
     };
   }
 
+  const classIds = [...new Set(pairs.map((pair) => pair.classId))];
+  const mine = pairFilter(pairs);
+
   const [submissions, attempts, drafts, lessons] = await Promise.all([
     supabase
       .from('assignment_submissions')
-      .select('id, assignment:assignments!inner(class_id)', { count: 'exact', head: true })
-      .in('assignment.class_id', classIds)
+      .select('id, assignment:assignments!inner(class_id, subject_id)', {
+        count: 'exact',
+        head: true,
+      })
+      .or(mine, { referencedTable: 'assignment' })
       .in('status', ['submitted', 'late', 'resubmitted']),
 
     supabase
       .from('quiz_attempts')
-      .select('id, quiz:quizzes!inner(class_id)', { count: 'exact', head: true })
-      .in('quiz.class_id', classIds)
+      .select('id, quiz:quizzes!inner(class_id, subject_id)', { count: 'exact', head: true })
+      .or(mine, { referencedTable: 'quiz' })
       .eq('status', 'submitted'),
 
     supabase
@@ -410,12 +479,13 @@ export interface PendingSubmission {
  * by name.
  */
 export async function listPendingSubmissions(
-  classIds: string[],
+  pairs: TeachingPair[],
   options: { limit?: number; classId?: string; subjectId?: string } = {},
 ): Promise<PendingSubmission[]> {
-  if (classIds.length === 0) return [];
+  const mine = narrowPairs(pairs, options);
+  if (mine.length === 0) return [];
 
-  let query = supabase
+  const query = supabase
     .from('assignment_submissions')
     .select(
       `id, status, submitted_at, is_late,
@@ -427,14 +497,9 @@ export async function listPendingSubmissions(
        )`,
     )
     .in('status', ['submitted', 'late', 'resubmitted'])
+    .or(pairFilter(mine), { referencedTable: 'assignment' })
     .order('submitted_at', { ascending: true })
     .limit(options.limit ?? 50);
-
-  query = options.classId
-    ? query.eq('assignment.class_id', options.classId)
-    : query.in('assignment.class_id', classIds);
-
-  if (options.subjectId) query = query.eq('assignment.subject_id', options.subjectId);
 
   const { data, error } = await query;
   if (error) throw toAppError(error);
@@ -487,12 +552,13 @@ export interface PendingAttempt {
  * sat the paper on Monday should not wait behind one who sat it this morning.
  */
 export async function listPendingAttempts(
-  classIds: string[],
+  pairs: TeachingPair[],
   options: { limit?: number; classId?: string; subjectId?: string } = {},
 ): Promise<PendingAttempt[]> {
-  if (classIds.length === 0) return [];
+  const mine = narrowPairs(pairs, options);
+  if (mine.length === 0) return [];
 
-  let query = supabase
+  const query = supabase
     .from('quiz_attempts')
     .select(
       `id, status, submitted_at, score, max_score,
@@ -502,14 +568,9 @@ export async function listPendingAttempts(
        quiz:quizzes!inner (id, title, class_id, subject_id, total_points)`,
     )
     .eq('status', 'submitted')
+    .or(pairFilter(mine), { referencedTable: 'quiz' })
     .order('submitted_at', { ascending: true })
     .limit(options.limit ?? 50);
-
-  query = options.classId
-    ? query.eq('quiz.class_id', options.classId)
-    : query.in('quiz.class_id', classIds);
-
-  if (options.subjectId) query = query.eq('quiz.subject_id', options.subjectId);
 
   const { data, error } = await query;
   if (error) throw toAppError(error);

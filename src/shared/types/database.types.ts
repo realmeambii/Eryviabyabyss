@@ -2331,6 +2331,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      contact_details: {
+        Args: { p_user_ids: string[] }
+        Returns: {
+          date_of_birth: string
+          phone: string
+          user_id: string
+        }[]
+      }
       current_user_context: { Args: never; Returns: Json }
       get_quiz_paper: {
         Args: { p_quiz_id: string }
@@ -2407,7 +2415,6 @@ export type Database = {
           email: string
           full_name: string
           id: string
-          phone: string
           status: Database["public"]["Enums"]["student_status"]
           total_count: number
           user_id: string

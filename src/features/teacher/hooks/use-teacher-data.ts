@@ -22,11 +22,11 @@ import { useTeacherScope } from './use-teacher-scope';
  */
 
 export function useTeacherWorkload() {
-  const { teacherId, sessionId, classIds, isPending } = useTeacherScope();
+  const { teacherId, sessionId, pairs, isPending } = useTeacherScope();
 
   return useQuery({
     queryKey: queryKeys.teachers.workload(teacherId ?? 'none', sessionId),
-    queryFn: () => getWorkload(classIds, sessionId!),
+    queryFn: () => getWorkload(pairs, sessionId!),
     enabled: Boolean(teacherId && sessionId) && !isPending,
     // The backlog moves as pupils hand in; a minute is fresh enough for a tile
     // and stops the dashboard hammering four count queries on every focus.
@@ -61,12 +61,12 @@ export function useClassStatistics(classId: string | undefined) {
 export function useMarkingQueue(
   options: { classId?: string; subjectId?: string; limit?: number } = {},
 ) {
-  const { classIds, isPending } = useTeacherScope();
+  const { pairs, isPending } = useTeacherScope();
 
   return useQuery({
-    queryKey: queryKeys.teachers.markingQueue({ ...options, classIds }),
-    queryFn: () => listPendingSubmissions(classIds, options),
-    enabled: !isPending && classIds.length > 0,
+    queryKey: queryKeys.teachers.markingQueue({ ...options, pairs }),
+    queryFn: () => listPendingSubmissions(pairs, options),
+    enabled: !isPending && pairs.length > 0,
     staleTime: 30_000,
   });
 }
@@ -81,12 +81,12 @@ export function useMarkingQueue(
 export function usePendingAttempts(
   options: { classId?: string; subjectId?: string; limit?: number } = {},
 ) {
-  const { classIds, isPending } = useTeacherScope();
+  const { pairs, isPending } = useTeacherScope();
 
   return useQuery({
-    queryKey: queryKeys.teachers.markingQueue({ ...options, classIds, kind: 'quiz' }),
-    queryFn: () => listPendingAttempts(classIds, options),
-    enabled: !isPending && classIds.length > 0,
+    queryKey: queryKeys.teachers.markingQueue({ ...options, pairs, kind: 'quiz' }),
+    queryFn: () => listPendingAttempts(pairs, options),
+    enabled: !isPending && pairs.length > 0,
     staleTime: 30_000,
   });
 }

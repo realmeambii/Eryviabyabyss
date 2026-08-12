@@ -1,5 +1,6 @@
 export {
   foldClasses,
+  foldPairs,
   foldSubjects,
   getClassRoster,
   getClassStatistics,
@@ -15,6 +16,7 @@ export {
   type PendingSubmission,
   type RosterStudent,
   type TeacherWorkload,
+  type TeachingPair,
 } from './api/teacher.service';
 
 export {

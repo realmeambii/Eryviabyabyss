@@ -219,6 +219,14 @@ export async function markRead(conversationId: string, myUserId: string): Promis
  * but not from the school test — and the check on adding anyone else requires
  * that I am already in the thread. Adding them first would be refused.
  *
+ * The id is minted here rather than by the database, because the row cannot be
+ * read back at the moment it is written: `conversations_select_participant` is
+ * "am I in this thread", and at that instant nobody is. A `RETURNING` clause —
+ * which is what `.insert().select()` sends — is evaluated against that policy,
+ * so it fails for the author of the thread as surely as for a stranger, and no
+ * conversation can ever be opened. Knowing the id up front removes the need to
+ * ask for it; the row is read back at the end, once I am a participant.
+ *
  * Not idempotent by design. Two people are allowed more than one thread; a
  * "find or create" would silently reopen a conversation about last term's
  * homework when a teacher meant to start one about a trip.
@@ -230,20 +238,19 @@ export async function startConversation(input: {
   subject: string | null;
   firstMessage: string;
 }): Promise<Conversation> {
-  const { data: conversation, error: createError } = await supabase
-    .from('conversations')
-    .insert({
-      school_id: input.schoolId,
-      created_by: input.myUserId,
-      subject: input.subject,
-    })
-    .select()
-    .single();
+  const conversationId = crypto.randomUUID();
+
+  const { error: createError } = await supabase.from('conversations').insert({
+    id: conversationId,
+    school_id: input.schoolId,
+    created_by: input.myUserId,
+    subject: input.subject,
+  });
 
   if (createError) throw toAppError(createError);
 
   const { error: meError } = await supabase.from('conversation_participants').insert({
-    conversation_id: conversation.id,
+    conversation_id: conversationId,
     user_id: input.myUserId,
     school_id: input.schoolId,
   });
@@ -252,7 +259,7 @@ export async function startConversation(input: {
 
   const { error: themError } = await supabase.from('conversation_participants').insert(
     input.withUserIds.map((userId) => ({
-      conversation_id: conversation.id,
+      conversation_id: conversationId,
       user_id: userId,
       school_id: input.schoolId,
     })),
@@ -263,16 +270,24 @@ export async function startConversation(input: {
   // inbox. Not a rollback — three statements are not a transaction over
   // PostgREST — but it is the tidiest outcome available from here.
   if (themError) {
-    await supabase.from('conversations').delete().eq('id', conversation.id);
+    await supabase.from('conversations').delete().eq('id', conversationId);
     throw toAppError(themError);
   }
 
   await sendMessage({
-    conversationId: conversation.id,
+    conversationId,
     schoolId: input.schoolId,
     senderId: input.myUserId,
     body: input.firstMessage,
   });
+
+  const { data: conversation, error: readError } = await supabase
+    .from('conversations')
+    .select()
+    .eq('id', conversationId)
+    .single();
+
+  if (readError) throw toAppError(readError);
 
   return conversation;
 }

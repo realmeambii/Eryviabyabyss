@@ -71,16 +71,34 @@ export async function listAuditEntries(filters: AuditFilters = {}): Promise<Audi
   return { rows: data as unknown as AuditEntry[], total: count ?? 0 };
 }
 
-/** Every entity type that actually appears, for the filter. */
+/**
+ * Every entity type that actually appears, for the filter.
+ *
+ * PostgREST has no DISTINCT, so this steps from one value to the next greater
+ * one — a loose index scan, one round trip per *type* rather than per row.
+ * Reading a page of rows and deduplicating it does not work: sorted by entity
+ * type, the first thousand rows of a full log are all the same type, and the
+ * filter then offers exactly one choice.
+ */
 export async function listAuditEntityTypes(): Promise<string[]> {
-  const { data, error } = await supabase
-    .from('audit_logs')
-    .select('entity_type')
-    .order('entity_type')
-    .limit(1000);
+  const types: string[] = [];
 
-  if (error) throw toAppError(error);
-  return [...new Set(data.map((row) => row.entity_type))].sort();
+  // The audited tables are a fixed, small set; the ceiling is a guard against
+  // a query that never terminates, not an expected limit.
+  while (types.length < 50) {
+    let query = supabase.from('audit_logs').select('entity_type').order('entity_type').limit(1);
+
+    const last = types.at(-1);
+    if (last !== undefined) query = query.gt('entity_type', last);
+
+    const { data, error } = await query;
+    if (error) throw toAppError(error);
+    if (data.length === 0) break;
+
+    types.push(data[0].entity_type);
+  }
+
+  return types;
 }
 
 /**

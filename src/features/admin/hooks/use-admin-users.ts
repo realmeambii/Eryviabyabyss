@@ -28,6 +28,10 @@ function useInvalidatePeople() {
       queryKeys.students.all,
       queryKeys.teachers.all,
       queryKeys.parents.all,
+      // An administrator is provisioned through the same path, and their list
+      // is its own cache — without this the founder adds a colleague and the
+      // page they added them from does not change.
+      queryKeys.administrators.all,
       // The dashboard counts every one of those.
       queryKeys.school.all,
     ]) {

@@ -67,7 +67,6 @@ export interface StudentRow {
     full_name: string;
     email: string;
     avatar_path: string | null;
-    phone: string | null;
     /**
      * Whether the *login* works — a different question from `status` above,
      * which is where the pupil stands with the school. A graduated student may
@@ -142,7 +141,6 @@ export async function listStudents({
       full_name: row.full_name,
       email: row.email,
       avatar_path: row.avatar_path,
-      phone: row.phone,
       status: row.user_status,
     },
     current_class: row.current_class_id

@@ -158,9 +158,37 @@ export type TeacherRow = Pick<
   assignment_count: number;
 };
 
+/**
+ * Phone numbers for a set of people, when the caller is entitled to them.
+ *
+ * `phone` and `date_of_birth` are revoked from `authenticated` on
+ * `public.users`: a staff row is readable school-wide so pupils can see who
+ * teaches them, and the contact details must not ride along on it. The
+ * `contact_details` RPC is definer and re-asks `app.may_read_contact()` per
+ * row, so this returns what the caller may have and silently omits the rest.
+ *
+ * One round trip for the whole list. A directory of 150 guardians is not 150
+ * requests.
+ */
+export async function contactDetails(
+  userIds: string[],
+): Promise<Map<string, { phone: string | null; dateOfBirth: string | null }>> {
+  const merged = new Map<string, { phone: string | null; dateOfBirth: string | null }>();
+  if (userIds.length === 0) return merged;
+
+  const { data, error } = await supabase.rpc('contact_details', { p_user_ids: userIds });
+  if (error) throw toAppError(error);
+
+  for (const row of data ?? []) {
+    merged.set(row.user_id, { phone: row.phone, dateOfBirth: row.date_of_birth });
+  }
+
+  return merged;
+}
+
 const TEACHER_SELECT = `id, staff_number, qualification, specialization, employment_type,
   hire_date, is_active,
-  user:users!teachers_user_id_fkey (id, full_name, email, phone, avatar_path, status),
+  user:users!teachers_user_id_fkey (id, full_name, email, avatar_path, status),
   teacher_assignments(count)`;
 
 export async function listTeachers(): Promise<TeacherRow[]> {
@@ -171,8 +199,16 @@ export async function listTeachers(): Promise<TeacherRow[]> {
     teacher_assignments: { count: number }[];
   })[];
 
+  const contacts = await contactDetails(
+    rows.map((row) => row.user?.id).filter((id): id is string => Boolean(id)),
+  );
+
   return rows
-    .map((row) => ({ ...row, assignment_count: row.teacher_assignments?.[0]?.count ?? 0 }))
+    .map((row) => ({
+      ...row,
+      user: row.user ? { ...row.user, phone: contacts.get(row.user.id)?.phone ?? null } : row.user,
+      assignment_count: row.teacher_assignments?.[0]?.count ?? 0,
+    }))
     .sort((a, b) => (a.user?.full_name ?? '').localeCompare(b.user?.full_name ?? ''));
 }
 
@@ -191,7 +227,7 @@ export type ParentRow = Pick<Parent, 'id' | 'occupation' | 'employer' | 'address
 };
 
 const PARENT_SELECT = `id, occupation, employer, address, is_active,
-  user:users!parents_user_id_fkey (id, full_name, email, phone, avatar_path, status),
+  user:users!parents_user_id_fkey (id, full_name, email, avatar_path, status),
   parent_students (
     id, relationship, is_primary_contact,
     student:students!parent_students_student_id_fkey (
@@ -217,9 +253,14 @@ export async function listParents(): Promise<ParentRow[]> {
     }[];
   })[];
 
+  const contacts = await contactDetails(
+    rows.map((row) => row.user?.id).filter((id): id is string => Boolean(id)),
+  );
+
   return rows
     .map((row) => ({
       ...row,
+      user: row.user ? { ...row.user, phone: contacts.get(row.user.id)?.phone ?? null } : row.user,
       children: (row.parent_students ?? [])
         // A guardian link whose student row is invisible to this caller comes
         // back with a null embed rather than being filtered out; drop it here
