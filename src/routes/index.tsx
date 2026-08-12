@@ -87,6 +87,7 @@ const TimetablePage = lazy(() => import('@/features/timetable/pages/timetable-pa
 const QuizzesPage = lazy(() => import('@/features/quizzes/pages/quizzes-page'));
 const NotificationsPage = lazy(() => import('@/features/notifications/pages/notifications-page'));
 const AnnouncementsPage = lazy(() => import('@/features/announcements/pages/announcements-page'));
+const AnnouncementPage = lazy(() => import('@/features/announcements/pages/announcement-page'));
 const MessagesPage = lazy(() => import('@/features/messages/pages/messages-page'));
 const AuditPage = lazy(() => import('@/features/admin/pages/admin-audit-page'));
 
@@ -102,9 +103,11 @@ function sharedPortalRoutes(): ReactNode {
   return (
     <>
       <Route path="assignments" element={<AssignmentsPage />} />
+      <Route path="quizzes" element={<QuizzesPage />} />
       <Route path="grades" element={<GradesPage />} />
       <Route path="timetable" element={<TimetablePage />} />
       <Route path="announcements" element={<AnnouncementsPage />} />
+      <Route path="announcements/:announcementId" element={<AnnouncementPage />} />
       <Route path="messages" element={<MessagesPage />} />
       <Route path="notifications" element={<NotificationsPage />} />
       <Route path="profile" element={<ProfilePage />} />
@@ -157,7 +160,6 @@ export function AppRoutes() {
                 <Route path="subjects" element={<StudentSubjectsPage />} />
                 <Route path="subjects/:subjectId" element={<StudentCoursePage />} />
                 <Route path="assignments/:assignmentId" element={<StudentAssignmentDetailPage />} />
-                <Route path="quizzes" element={<QuizzesPage />} />
                 <Route path="quizzes/:quizId" element={<StudentQuizPage />} />
               </>,
             )}
@@ -178,7 +180,6 @@ export function AppRoutes() {
                 <Route path="students/:studentId" element={<TeacherStudentPage />} />
                 <Route path="grading" element={<TeacherGradingPage />} />
                 <Route path="analytics" element={<TeacherAnalyticsPage />} />
-                <Route path="quizzes" element={<QuizzesPage />} />
               </>,
             )}
 
@@ -204,7 +205,6 @@ export function AppRoutes() {
                 <Route path="subjects" element={<AdminSubjectsPage />} />
                 <Route path="sessions" element={<AdminSessionsPage />} />
                 <Route path="audit" element={<AuditPage />} />
-                <Route path="quizzes" element={<QuizzesPage />} />
               </>,
             )}
 

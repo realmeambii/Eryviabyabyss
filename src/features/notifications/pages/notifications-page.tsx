@@ -1,11 +1,13 @@
 import { BellRing, CheckCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { useAuth } from '@/features/auth';
 import { EmptyState } from '@/shared/components/empty-state';
 import { LoadingBlock } from '@/shared/components/loading-screen';
 import { PageHeader } from '@/shared/components/page-header';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
+import { portalHref } from '@/shared/lib/portal-href';
 import { formatRelative } from '@/shared/utils/format';
 import { cn } from '@/shared/utils/cn';
 
@@ -17,6 +19,10 @@ import {
 
 export default function NotificationsPage() {
   const { data: notifications, isPending } = useNotifications({ limit: 100 });
+  // Stored `action_url`s are portal-agnostic — one announcement notifies
+  // pupils, guardians and staff from a single trigger call, so the prefix can
+  // only be decided against the person reading it.
+  const { primaryRole } = useAuth();
   const markRead = useMarkNotificationRead();
   const markAll = useMarkAllNotificationsRead();
 
@@ -85,6 +91,8 @@ export default function NotificationsPage() {
               </div>
             );
 
+            const href = primaryRole ? portalHref(notification.action_url, primaryRole) : null;
+
             return (
               <div
                 key={notification.id}
@@ -93,9 +101,9 @@ export default function NotificationsPage() {
                   notification.is_read ? '' : 'bg-brand-soft/50',
                 )}
               >
-                {notification.action_url ? (
+                {href ? (
                   <Link
-                    to={notification.action_url}
+                    to={href}
                     onClick={() => {
                       if (!notification.is_read) markRead.mutate({ id: notification.id });
                     }}

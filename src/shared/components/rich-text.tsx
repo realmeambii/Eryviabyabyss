@@ -27,6 +27,15 @@ export function RichText({
     <div
       className={cn(
         'text-[14.5px] leading-relaxed text-ink-2',
+        // Authored content is pasted, and a pasted URL is one unbroken word.
+        // Without this a single long token widens the whole document — a
+        // 400-character string pushed the page to 3819px against a 1500px
+        // viewport — and every screen scrolls sideways, worst on a phone.
+        // `break-words` alone does not cover a token longer than the line box.
+        '[overflow-wrap:anywhere] break-words',
+        // A wide table is the one thing that should scroll on its own rather
+        // than being broken up.
+        '[&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto',
         '[&_p]:my-3 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0',
         '[&_h1]:mt-6 [&_h1]:mb-2 [&_h1]:text-[19px] [&_h1]:font-extrabold [&_h1]:tracking-tight [&_h1]:text-ink',
         '[&_h2]:mt-5 [&_h2]:mb-2 [&_h2]:text-[17px] [&_h2]:font-extrabold [&_h2]:tracking-tight [&_h2]:text-ink',

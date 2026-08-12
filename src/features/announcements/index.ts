@@ -13,3 +13,4 @@ export { useAnnouncementMutations, useAnnouncements } from './hooks/use-announce
 export { AnnouncementComposer } from './components/announcement-composer';
 
 export { default as AnnouncementsPage } from './pages/announcements-page';
+export { default as AnnouncementPage } from './pages/announcement-page';

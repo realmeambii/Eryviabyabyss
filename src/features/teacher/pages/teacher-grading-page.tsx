@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCheck, ClipboardCheck, ClipboardList, Clock, FileSpreadsheet } from 'lucide-react';
 
 import { useGrading } from '@/features/assignments';
@@ -52,10 +52,21 @@ interface Draft {
 export default function TeacherGradingPage() {
   const scope = useTeacherScope();
 
+  /**
+   * Two screens link here with a destination in mind, and both were being
+   * ignored: the dashboard sends `?submission=` from a specific pupil's row,
+   * and a subject page sends `?subject=`. Landing a teacher on an unfiltered
+   * queue of forty and letting them hunt is the same as not linking at all.
+   */
+  const [searchParams] = useSearchParams();
+  const focusSubmission = searchParams.get('submission');
+
   const [classId, setClassId] = useState('');
-  const [subjectId, setSubjectId] = useState('');
+  const [subjectId, setSubjectId] = useState(() => searchParams.get('subject') ?? '');
   const [kind, setKind] = useState<'all' | 'assignment' | 'quiz'>('all');
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+
+  const focusRef = useRef<HTMLLIElement | null>(null);
 
   const filters = useMemo(
     () => ({
@@ -131,6 +142,14 @@ export default function TeacherGradingPage() {
       return a.handedIn.localeCompare(b.handedIn);
     });
   }, [submissions.data, attempts.data, kind]);
+
+  // Bring the row the caller asked for into view once it has rendered. Not a
+  // filter: the rest of the queue stays visible, because a teacher who came to
+  // mark one paper usually marks the next three while they are here.
+  useEffect(() => {
+    if (!focusSubmission || queue.length === 0) return;
+    focusRef.current?.scrollIntoView({ block: 'center' });
+  }, [focusSubmission, queue.length]);
 
   const setDraft = (id: string, patch: Partial<Draft>) => {
     setDrafts((current) => ({
@@ -330,8 +349,16 @@ export default function TeacherGradingPage() {
             const label = scope.classes.find((entry) => entry.id === row.classId);
 
             return (
-              <li key={`${row.kind}-${row.id}`}>
-                <Card className={cn(invalid && 'border-danger')}>
+              <li
+                key={`${row.kind}-${row.id}`}
+                ref={row.id === focusSubmission ? focusRef : undefined}
+              >
+                <Card
+                  className={cn(
+                    invalid && 'border-danger',
+                    row.id === focusSubmission && 'border-brand-border ring-2 ring-brand/30',
+                  )}
+                >
                   <CardContent className="space-y-3">
                     <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
                       <div className="min-w-0">
