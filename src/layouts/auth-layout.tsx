@@ -23,7 +23,7 @@ export default function AuthLayout() {
             <div className="flex items-center gap-2">
               <AppLogo size={38} />
               {/* Set in the display face: this is a logo, not a heading. */}
-              <span className="font-display text-[34px] leading-none font-bold tracking-tight text-ink">
+              <span className="font-display text-[34px] leading-none font-medium tracking-tight text-ink">
                 Eryvia
               </span>
             </div>
