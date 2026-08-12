@@ -16,7 +16,6 @@ import {
 } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
 import { ROLE_HOME, ROUTES } from '@/shared/lib/constants';
-import { env } from '@/shared/lib/env';
 import { errorMessage } from '@/shared/lib/errors';
 
 import { useAuth } from '../hooks/use-auth';
@@ -160,15 +159,6 @@ export default function LoginPage() {
       <p className="mt-8 text-center text-[13px] text-ink-3">
         Need an account? Ask your school administrator to invite you.
       </p>
-
-      {env.isLocal ? (
-        <div className="mt-6 rounded-lg border border-dashed border-border p-3 text-[11.5px] leading-relaxed text-ink-3">
-          <span className="font-bold text-ink-2">Seeded accounts</span> — password{' '}
-          <code className="text-ink">Password123!</code>
-          <br />
-          admin@ · teacher@ · student@ · parent@gnaschools.edu.ng
-        </div>
-      ) : null}
     </div>
   );
 }

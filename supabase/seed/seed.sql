@@ -59,8 +59,8 @@ insert into public.schools (
 )
 values (
   '10000000-0000-4000-8000-000000000001'::uuid,
-  'Great Nigeria Academy',
-  'great-nigeria-academy',
+  'GNASchools',
+  'gnaschools',
   'Knowledge, Character, Service',
   'info@gnaschools.edu.ng',
   '+234 803 555 0100',

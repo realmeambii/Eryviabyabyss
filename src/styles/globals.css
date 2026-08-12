@@ -146,6 +146,9 @@
 
   /* ── Type ───────────────────────────────────────────────────────────── */
   --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Wordmark only. Geometric, wide apertures and a straight-tailed `y` — the
+     letterforms of the Eryvia mark. Never used for body copy. */
+  --font-display: 'Outfit', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, 'JetBrains Mono', 'SFMono-Regular', Menlo, monospace;
 
   /* ── Radii ──────────────────────────────────────────────────────────── */

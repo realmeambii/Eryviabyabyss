@@ -18,10 +18,14 @@ export default function AuthLayout() {
         <div className="mb-12 flex items-center gap-3">
           <AppLogo size={44} className="rounded-xl" />
           <div className="flex flex-col gap-0.5">
-            <span className="text-base font-extrabold tracking-tight text-ink">Eryvia</span>
+            {/* The wordmark is set in the display face rather than the UI
+                sans — it is a logo here, not a heading. */}
+            <span className="font-display text-[28px] leading-none font-semibold tracking-tight text-ink">
+              Eryvia
+            </span>
             {/* Sentence case, not the uppercase used for descriptors elsewhere:
                 "by Abyss" is part of the mark, not a label. */}
-            <span className="text-[11.5px] font-semibold text-brand">by Abyss</span>
+            <span className="font-display text-[13px] font-medium text-brand">by Abyss</span>
           </div>
           <div className="ml-auto">
             <ThemeToggle />
@@ -33,7 +37,7 @@ export default function AuthLayout() {
         </main>
 
         <footer className="mt-12 text-[12px] text-ink-3">
-          © {new Date().getFullYear()} Great Nigeria Academy. All rights reserved.
+          © {new Date().getFullYear()} Eryvia by Abyss. All rights reserved.
         </footer>
       </div>
 
