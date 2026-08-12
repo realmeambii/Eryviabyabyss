@@ -38,6 +38,10 @@
   /* Brand */
   --app-primary: #2563eb;
   --app-primary-hover: #1d4ed8;
+  /* The violet the Eryvia mark is drawn in. Deliberately separate from
+     --app-primary: this is the logo's colour, not the interface's accent, and
+     the two are allowed to differ. Used only by the wordmark. */
+  --app-mark: #6d3ef0;
   --app-primary-soft: #eef4ff;
   --app-primary-border: #c9dcff;
   --app-on-primary: #ffffff;
@@ -75,6 +79,8 @@
 
   --app-primary: #4d8bff;
   --app-primary-hover: #6aa0ff;
+  /* Lifted for contrast on the dark card; the same hue. */
+  --app-mark: #a78bfa;
   --app-primary-soft: #15233c;
   --app-primary-border: #263c60;
   --app-on-primary: #0c0f14;
@@ -131,6 +137,7 @@
   --color-ink-2: var(--app-text-2);
   --color-ink-3: var(--app-text-3);
   --color-brand: var(--app-primary);
+  --color-mark: var(--app-mark);
   --color-brand-hover: var(--app-primary-hover);
   --color-brand-soft: var(--app-primary-soft);
   --color-brand-border: var(--app-primary-border);
@@ -146,9 +153,10 @@
 
   /* ── Type ───────────────────────────────────────────────────────────── */
   --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  /* Wordmark only. Geometric, wide apertures and a straight-tailed `y` — the
-     letterforms of the Eryvia mark. Never used for body copy. */
-  --font-display: 'Outfit', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  /* Wordmark only. Geometric, near-circular bowls, a single-storey `a` and a
+     straight-tailed `y` — the letterforms the mark is drawn in. Never used for
+     body copy. */
+  --font-display: 'Poppins', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, 'JetBrains Mono', 'SFMono-Regular', Menlo, monospace;
 
   /* ── Radii ──────────────────────────────────────────────────────────── */

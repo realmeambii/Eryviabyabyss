@@ -15,18 +15,24 @@ export default function AuthLayout() {
     <div className="grid min-h-dvh bg-background lg:grid-cols-[1.05fr_0.95fr]">
       {/* ── Form ─────────────────────────────────────────────────────── */}
       <div className="flex flex-col justify-center border-border bg-card px-6 py-12 sm:px-12 lg:border-r lg:px-20">
-        <div className="mb-12 flex items-center gap-3">
-          <AppLogo size={44} className="rounded-xl" />
-          <div className="flex flex-col gap-0.5">
-            {/* The wordmark is set in the display face rather than the UI
-                sans — it is a logo here, not a heading. */}
-            <span className="font-display text-[28px] leading-none font-semibold tracking-tight text-ink">
-              Eryvia
+        <div className="mb-12 flex items-start gap-3">
+          {/* The lockup: mark and wordmark share one baseline row, with the
+              endorsement tucked under the right edge of the word — the
+              arrangement of the mark itself, not a stack of two labels. */}
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <AppLogo size={38} />
+              {/* Set in the display face: this is a logo, not a heading. */}
+              <span className="font-display text-[34px] leading-none font-bold tracking-tight text-ink">
+                Eryvia
+              </span>
+            </div>
+            {/* Sentence case and right-aligned to the wordmark, as drawn. */}
+            <span className="self-end font-display text-[13px] leading-none font-medium text-mark">
+              by Abyss
             </span>
-            {/* Sentence case, not the uppercase used for descriptors elsewhere:
-                "by Abyss" is part of the mark, not a label. */}
-            <span className="font-display text-[13px] font-medium text-brand">by Abyss</span>
           </div>
+
           <div className="ml-auto">
             <ThemeToggle />
           </div>

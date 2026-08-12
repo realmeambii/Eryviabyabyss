@@ -17,7 +17,7 @@ export function LoadingScreen({ label = 'Loading…' }: { label?: string }) {
       aria-live="polite"
       className="flex min-h-dvh flex-col items-center justify-center gap-5 bg-background"
     >
-      <AppLogo size={44} className="rounded-xl" />
+      <AppLogo size={44} />
       <div className="flex items-center gap-2 text-[13px] font-medium text-ink-3">
         <Loader2 className="size-4 animate-spin" aria-hidden />
         {label}

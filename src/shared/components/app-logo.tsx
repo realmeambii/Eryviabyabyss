@@ -23,7 +23,11 @@ export function AppLogo({ src, size = 32, className, alt = 'Eryvia' }: AppLogoPr
       alt={alt}
       width={size}
       height={size}
-      className={cn('shrink-0 rounded-[9px] border border-border object-cover', className)}
+      // No border or rounded box: the mark sits directly on the background.
+      // `object-contain` rather than `cover` so a crest of any aspect ratio is
+      // letterboxed instead of cropped — cropping a school's badge is worse
+      // than a little empty space beside it.
+      className={cn('shrink-0 object-contain', className)}
       style={{ width: size, height: size }}
     />
   );
