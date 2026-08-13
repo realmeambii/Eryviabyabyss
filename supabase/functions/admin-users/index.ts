@@ -1,4 +1,4 @@
-import { error, handlePreflight, json } from '../_shared/cors.ts';
+import { error, handlePreflight, json, withCors } from '../_shared/cors.ts';
 import { escapeHtml, renderEmail, sendEmail } from '../_shared/email.ts';
 import { adminClient, currentUser } from '../_shared/supabase.ts';
 
@@ -972,39 +972,41 @@ async function handleSetStatus(
 
 // ── Entry point ─────────────────────────────────────────────────────────────
 
-Deno.serve(async (request: Request) => {
-  const preflight = handlePreflight(request);
-  if (preflight) return preflight;
+Deno.serve(
+  withCors(async (request: Request) => {
+    const preflight = handlePreflight(request);
+    if (preflight) return preflight;
 
-  if (request.method !== 'POST') {
-    return error(request, 'Method not allowed', 405);
-  }
+    if (request.method !== 'POST') {
+      return error(request, 'Method not allowed', 405);
+    }
 
-  const user = await currentUser(request);
-  if (!user) {
-    return error(request, 'Not authenticated', 401);
-  }
+    const user = await currentUser(request);
+    if (!user) {
+      return error(request, 'Not authenticated', 401);
+    }
 
-  const caller = await resolveAdministrator(user.id);
-  if (!caller) {
-    return error(request, 'Only an administrator can manage accounts.', 403);
-  }
+    const caller = await resolveAdministrator(user.id);
+    if (!caller) {
+      return error(request, 'Only an administrator can manage accounts.', 403);
+    }
 
-  let payload: Payload;
-  try {
-    payload = (await request.json()) as Payload;
-  } catch {
-    return error(request, 'Body must be JSON', 400);
-  }
+    let payload: Payload;
+    try {
+      payload = (await request.json()) as Payload;
+    } catch {
+      return error(request, 'Body must be JSON', 400);
+    }
 
-  switch (payload.action) {
-    case 'create':
-      return await handleCreate(request, payload, caller);
-    case 'reset-password':
-      return await handleResetPassword(request, payload, caller);
-    case 'set-status':
-      return await handleSetStatus(request, payload, caller);
-    default:
-      return error(request, 'Unknown action', 400);
-  }
-});
+    switch (payload.action) {
+      case 'create':
+        return await handleCreate(request, payload, caller);
+      case 'reset-password':
+        return await handleResetPassword(request, payload, caller);
+      case 'set-status':
+        return await handleSetStatus(request, payload, caller);
+      default:
+        return error(request, 'Unknown action', 400);
+    }
+  }),
+);

@@ -47,3 +47,36 @@ export function json(request: Request, body: unknown, status = 200): Response {
 export function error(request: Request, message: string, status = 400): Response {
   return json(request, { error: message }, status);
 }
+
+/**
+ * Wraps a handler so an unhandled throw still comes back with CORS headers.
+ *
+ * Without this the Deno runtime answers with its own bare 500, which carries
+ * none of the headers above. The browser then refuses to expose the response
+ * to the page at all: the caller sees a request with no status code, no body
+ * and nothing in the console beyond an opaque CORS complaint, while the actual
+ * message — a missing environment variable, a failed lookup — is discarded in
+ * transit. Every distinct fault presents identically, which is worse than any
+ * one of them.
+ *
+ * The message is returned rather than hidden behind "internal error". These
+ * endpoints already hand back provisioning failures verbatim, and an operator
+ * who cannot see why an account would not create has no way forward.
+ */
+export function withCors(handler: (request: Request) => Promise<Response>) {
+  return async (request: Request): Promise<Response> => {
+    try {
+      return await handler(request);
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : String(cause);
+      console.error(
+        '[unhandled]',
+        request.method,
+        new URL(request.url).pathname,
+        message,
+        cause instanceof Error ? cause.stack : '',
+      );
+      return error(request, message, 500);
+    }
+  };
+}
