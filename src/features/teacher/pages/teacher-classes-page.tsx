@@ -12,6 +12,7 @@ import { Input } from '@/shared/components/ui/input';
 import { Select } from '@/shared/components/ui/select';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { useDebouncedValue } from '@/shared/hooks/use-debounced-value';
+import { CLASS_LEVELS } from '@/shared/lib/constants';
 import { className as formatClassName } from '@/shared/utils/format';
 
 import type { MyClass } from '../api/teacher.service';
@@ -30,14 +31,7 @@ import { useTeacherScope } from '../hooks/use-teacher-scope';
 
 const PER_PAGE = 9;
 
-const LEVELS = [
-  { value: '1', label: 'JSS 1' },
-  { value: '2', label: 'JSS 2' },
-  { value: '3', label: 'JSS 3' },
-  { value: '4', label: 'SS 1' },
-  { value: '5', label: 'SS 2' },
-  { value: '6', label: 'SS 3' },
-];
+const LEVELS = CLASS_LEVELS.map((item) => ({ value: String(item.value), label: item.label }));
 
 export default function TeacherClassesPage() {
   const scope = useTeacherScope();

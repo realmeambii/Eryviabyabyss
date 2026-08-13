@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Library, Plus, Search, Trash2, UserPlus, Users } from 'lucide-react';
 
+import { useCurrentUser } from '@/features/auth';
 import { ConfirmDialog } from '@/shared/components/confirm-dialog';
 import { DataTable, type Column } from '@/shared/components/data-table';
 import { EmptyState } from '@/shared/components/empty-state';
@@ -23,11 +24,13 @@ import { Label } from '@/shared/components/ui/label';
 import { Select } from '@/shared/components/ui/select';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { useDebouncedValue } from '@/shared/hooks/use-debounced-value';
+import { CLASS_LEVELS } from '@/shared/lib/constants';
 import { className as formatClassName } from '@/shared/utils/format';
 
 import type { ClassWithCounts } from '../api/classes.service';
 import {
   useAssignableTeachers,
+  useClassMutations,
   useClassTeaching,
   useClasses,
   useSubjects,
@@ -48,6 +51,10 @@ export default function AdminClassesPage() {
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [managing, setManagingId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  // A class belongs to a term, so with no current term there is nothing to
+  // create it against. Better to say so than to offer a button that fails.
+  const { currentSession } = useCurrentUser();
 
   const debounced = useDebouncedValue(search, 250);
   const classes = useClasses();
@@ -122,6 +129,18 @@ export default function AdminClassesPage() {
       <PageHeader
         title="Classes"
         description="Who is on the roll, which subjects they take, and who teaches them."
+        actions={
+          <Button
+            onClick={() => {
+              setCreating(true);
+            }}
+            disabled={!currentSession}
+            title={currentSession ? undefined : 'Set a current term first'}
+          >
+            <Plus className="size-4" aria-hidden />
+            New class
+          </Button>
+        }
       />
 
       <DataTable
@@ -135,7 +154,20 @@ export default function AdminClassesPage() {
           title: debounced ? 'Nothing matches' : 'No classes this term',
           description: debounced
             ? `Nothing matches “${debounced}”.`
-            : 'Classes are created per term. Once one exists you can set its curriculum and assign teachers.',
+            : currentSession
+              ? 'Classes are created per term. Add the first one, then set its curriculum and assign teachers.'
+              : 'Classes belong to a term. Open Academic sessions and mark one current, then come back.',
+          action:
+            debounced || !currentSession ? undefined : (
+              <Button
+                onClick={() => {
+                  setCreating(true);
+                }}
+              >
+                <Plus className="size-4" aria-hidden />
+                New class
+              </Button>
+            ),
         }}
         toolbar={
           <div className="relative max-w-sm">
@@ -162,7 +194,186 @@ export default function AdminClassesPage() {
           if (!open) setManagingId(null);
         }}
       />
+
+      <NewClassDialog open={creating} onOpenChange={setCreating} />
     </div>
+  );
+}
+
+// ── Creating a class ────────────────────────────────────────────────────────
+
+/**
+ * The level is chosen, not typed, and it sets the name with it.
+ *
+ * `classes.level` is what every level-targeted query filters on — shared
+ * resources, the library, promotion — while `name` is only ever displayed. Two
+ * free-text fields would let them disagree, and a class named "SS 1" carrying
+ * level 2 is invisible to half the product with nothing in the schema to
+ * object. One control, both columns.
+ */
+function NewClassDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { create } = useClassMutations();
+
+  const [level, setLevel] = useState('');
+  const [arm, setArm] = useState('A');
+  const [room, setRoom] = useState('');
+  const [capacity, setCapacity] = useState('');
+
+  const chosen = CLASS_LEVELS.find((item) => String(item.value) === level);
+  const trimmedArm = arm.trim().toUpperCase();
+  const canSubmit = Boolean(chosen) && trimmedArm.length > 0 && !create.isPending;
+
+  const reset = () => {
+    setLevel('');
+    setArm('A');
+    setRoom('');
+    setCapacity('');
+  };
+
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!chosen || trimmedArm.length === 0) return;
+
+    // `capacity` is NOT NULL with a default, so an unset field is left out
+    // entirely rather than sent as null.
+    const parsedCapacity = Number.parseInt(capacity, 10);
+    const hasCapacity = Number.isFinite(parsedCapacity) && parsedCapacity > 0;
+
+    create.mutate(
+      {
+        name: chosen.label,
+        level: chosen.value,
+        arm: trimmedArm,
+        // Unique per school and term, and never shown — derived so nobody has
+        // to invent one and collide with a class they cannot see.
+        code: `${chosen.label.replace(/\s+/g, '')}${trimmedArm}`,
+        room: room.trim() || null,
+        ...(hasCapacity ? { capacity: parsedCapacity } : {}),
+      },
+      {
+        onSuccess: () => {
+          reset();
+          onOpenChange(false);
+        },
+      },
+    );
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) reset();
+        onOpenChange(next);
+      }}
+    >
+      <DialogContent>
+        <form onSubmit={submit}>
+          <DialogHeader>
+            <DialogTitle>New class</DialogTitle>
+            <DialogDescription>
+              Classes belong to the current term. Next term’s {chosen?.label ?? 'JSS 1'}
+              {trimmedArm || 'A'} is a separate class with its own roll.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogBody className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="nc-level">Level</Label>
+                <Select
+                  id="nc-level"
+                  value={level}
+                  onChange={(event) => {
+                    setLevel(event.target.value);
+                  }}
+                  placeholder="Choose a level"
+                  options={CLASS_LEVELS.map((item) => ({
+                    value: String(item.value),
+                    label: item.label,
+                  }))}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="nc-arm">Arm</Label>
+                <Input
+                  id="nc-arm"
+                  value={arm}
+                  onChange={(event) => {
+                    setArm(event.target.value);
+                  }}
+                  maxLength={4}
+                  placeholder="A"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="nc-room">Room (optional)</Label>
+                <Input
+                  id="nc-room"
+                  value={room}
+                  onChange={(event) => {
+                    setRoom(event.target.value);
+                  }}
+                  placeholder="Block B, Room 4"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="nc-capacity">Capacity (optional)</Label>
+                <Input
+                  id="nc-capacity"
+                  type="number"
+                  min={1}
+                  max={200}
+                  inputMode="numeric"
+                  value={capacity}
+                  onChange={(event) => {
+                    setCapacity(event.target.value);
+                  }}
+                  placeholder="40"
+                />
+              </div>
+            </div>
+
+            {chosen ? (
+              <p className="text-sm text-ink-3">
+                This creates{' '}
+                <span className="font-semibold text-ink">
+                  {formatClassName(chosen.label, trimmedArm)}
+                </span>
+                . Assign teachers to it from the Teaching panel afterwards — until then no teacher
+                can see it.
+              </p>
+            ) : null}
+          </DialogBody>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                onOpenChange(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!canSubmit} loading={create.isPending}>
+              Create class
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 

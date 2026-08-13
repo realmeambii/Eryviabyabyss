@@ -96,13 +96,28 @@ export function useClasses(sessionId?: string) {
 
 export function useClassMutations() {
   const queryClient = useQueryClient();
+  const { school, currentSession } = useCurrentUser();
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: queryKeys.classes.all });
   };
 
+  // School and term are supplied here rather than by the caller. A class is
+  // scoped to one term — next term's JSS 1A is a different row — so a screen
+  // that had to remember to pass the session could silently file a class under
+  // the wrong one, or under none, and the roll would come back empty.
   const create = useMutation({
-    mutationFn: classesApi.createClass,
+    mutationFn: (
+      input: Omit<
+        Parameters<typeof classesApi.createClass>[0],
+        'school_id' | 'academic_session_id'
+      >,
+    ) =>
+      classesApi.createClass({
+        ...input,
+        school_id: school!.id,
+        academic_session_id: currentSession!.id,
+      }),
     onSuccess: (row) => {
       toast.success(`${row.name}${row.arm} created.`);
       invalidate();

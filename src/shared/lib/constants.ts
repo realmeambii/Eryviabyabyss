@@ -51,6 +51,23 @@ export const WEEKDAYS = [
   { value: 7, label: 'Sunday', short: 'Sun' },
 ] as const;
 
+/**
+ * The six Nigerian secondary levels, matching `classes.level` (1..6) and the
+ * `min_level`/`max_level` bounds on shared resources.
+ *
+ * Shared rather than re-declared per screen because the number and the label
+ * have to agree: a class named "SS 1" carrying level 2 is invisible to every
+ * level-targeted query and nothing in the schema would object.
+ */
+export const CLASS_LEVELS = [
+  { value: 1, label: 'JSS 1' },
+  { value: 2, label: 'JSS 2' },
+  { value: 3, label: 'JSS 3' },
+  { value: 4, label: 'SS 1' },
+  { value: 5, label: 'SS 2' },
+  { value: 6, label: 'SS 3' },
+] as const;
+
 export const TERM_LABEL = {
   first: 'First Term',
   second: 'Second Term',
