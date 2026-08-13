@@ -17,18 +17,37 @@ function allowedOrigins(): string[] {
     .filter(Boolean);
 }
 
+const DEFAULT_ALLOWED_HEADERS =
+  'authorization, x-client-info, apikey, content-type, x-application-name, x-cron-secret';
+
 export function corsHeaders(request: Request): Record<string, string> {
   const origin = request.headers.get('origin') ?? '';
   const permitted = allowedOrigins();
   const allow = permitted.includes(origin) ? origin : (permitted[0] ?? '');
 
+  // Echo the headers the preflight actually asked for instead of answering
+  // with a fixed list.
+  //
+  // The origin allow-list above is the control that matters. The header list
+  // is not a security boundary — it cannot grant an origin anything, it only
+  // states what a permitted origin may send — but hard-coding it means any
+  // header the client picks up later silently blocks every call from the
+  // browser. That is exactly what happened: `api-client.ts` sends
+  // `x-application-name`, this list did not name it, and so the preflight
+  // answered 204 while the browser refused to send the request that followed.
+  // The POST never left the machine, which is why the failure showed up as a
+  // request with no status and an empty body rather than an error anyone
+  // could read.
+  const requested = request.headers.get('access-control-request-headers');
+
   return {
     'Access-Control-Allow-Origin': allow,
-    'Access-Control-Allow-Headers':
-      'authorization, x-client-info, apikey, content-type, x-cron-secret',
+    'Access-Control-Allow-Headers': requested ?? DEFAULT_ALLOWED_HEADERS,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Max-Age': '86400',
-    Vary: 'Origin',
+    // The response now depends on the requested-headers field too, so a cache
+    // must key on it or it will replay an answer that omits a later header.
+    Vary: 'Origin, Access-Control-Request-Headers',
   };
 }
 
