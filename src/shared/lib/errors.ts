@@ -144,7 +144,7 @@ export function toAppError(error: unknown): AppError {
                   : 'unknown';
 
     const body = error.response?.data as { message?: string; error?: string } | undefined;
-    return new AppError(body?.message ?? body?.error ?? error.message, {
+    return new AppError(body?.message ?? body?.error ?? error.message ?? 'Something went wrong.', {
       kind,
       code: String(status),
       cause: error,
@@ -152,14 +152,30 @@ export function toAppError(error: unknown): AppError {
   }
 
   if (error instanceof Error) {
-    return new AppError(error.message, { kind: 'unknown', cause: error });
+    // Same reason as `humaniseAuthMessage`: a thrown value is not obliged to
+    // honour the `Error` shape it claims.
+    return new AppError(error.message ?? 'Something went wrong.', {
+      kind: 'unknown',
+      cause: error,
+    });
   }
 
   return new AppError('Something went wrong.', { kind: 'unknown', cause: error });
 }
 
-/** GoTrue's wording is developer-facing; these are the ones users actually hit. */
-function humaniseAuthMessage(message: string): string {
+/**
+ * GoTrue's wording is developer-facing; these are the ones users actually hit.
+ *
+ * The parameter is typed `string` on `AuthError`, but the type is a claim
+ * about a value that crossed a network and a library boundary, not a
+ * guarantee. When a fetch fails outright — a blocked preflight, say — the
+ * message can arrive undefined, and `undefined.toLowerCase()` then threw
+ * *inside the error handler*, replacing whatever went wrong with a
+ * `TypeError` from a stack frame that had nothing to do with it. Anything on
+ * this path has to be total.
+ */
+function humaniseAuthMessage(message: string | null | undefined): string {
+  if (!message) return 'Something went wrong.';
   const normalised = message.toLowerCase();
 
   if (normalised.includes('invalid login credentials')) {
