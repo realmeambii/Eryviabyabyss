@@ -12,6 +12,27 @@ const booleanish = z
   .union([z.literal('true'), z.literal('false'), z.literal('1'), z.literal('0')])
   .transform((value) => value === 'true' || value === '1');
 
+/**
+ * Treat a blank value as absent.
+ *
+ * `.default()` only fires on `undefined`, but a hosting platform that imports
+ * `.env.example` supplies `""` for every variable the operator left blank —
+ * defined, and therefore validated, and therefore rejected. Vercel does exactly
+ * that, and the deployed app refused to start on first paint with four
+ * "Invalid input" lines for variables that all had usable defaults sitting
+ * right there.
+ *
+ * Applied only to the optional settings. `VITE_SUPABASE_URL` and the anon key
+ * stay strict: a blank there is a real misconfiguration with no sane default,
+ * and failing loudly on the first paint is the entire point of this file.
+ */
+function optionalEnv<T extends z.ZodTypeAny>(inner: T) {
+  return z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+    inner,
+  );
+}
+
 const schema = z.object({
   VITE_SUPABASE_URL: z.url('VITE_SUPABASE_URL must be a URL, e.g. https://xyz.supabase.co'),
 
@@ -19,14 +40,16 @@ const schema = z.object({
     .string()
     .min(20, 'VITE_SUPABASE_ANON_KEY looks truncated — copy the whole key'),
 
-  VITE_APP_ENV: z.enum(['local', 'development', 'staging', 'production']).default('local'),
+  VITE_APP_ENV: optionalEnv(
+    z.enum(['local', 'development', 'staging', 'production']).default('local'),
+  ),
 
-  VITE_APP_URL: z.url().default('http://localhost:5173'),
+  VITE_APP_URL: optionalEnv(z.url().default('http://localhost:5173')),
 
-  VITE_API_BASE_URL: z.url().optional(),
+  VITE_API_BASE_URL: optionalEnv(z.url().optional()),
 
-  VITE_ENABLE_REALTIME: booleanish.default(true),
-  VITE_ENABLE_DEVTOOLS: booleanish.default(true),
+  VITE_ENABLE_REALTIME: optionalEnv(booleanish.default(true)),
+  VITE_ENABLE_DEVTOOLS: optionalEnv(booleanish.default(true)),
 });
 
 function parseEnv() {
