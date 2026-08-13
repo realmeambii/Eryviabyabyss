@@ -38,6 +38,11 @@
 \set admin_email   'you@yourschool.edu.ng'
 \set school_name   'Your School Name'
 \set school_slug   'your-school-name'
+-- The term the school is currently in. `name` must be YYYY/YYYY.
+\set session_name  '2025/2026'
+\set session_term  'first'
+\set session_start '2025-09-15'
+\set session_end   '2025-12-19'
 -- ────────────────────────────────────────────────────────────────────────────
 
 begin;
@@ -66,6 +71,26 @@ $$;
 insert into public.schools (name, slug)
 select :'school_name', :'school_slug'
 where not exists (select 1 from public.schools where slug = :'school_slug');
+
+-- ── The current term ────────────────────────────────────────────────────────
+--  A school without a term is inert. Every academic screen — classes, subjects,
+--  the timetable, results — resolves its data through `current_session`, and
+--  the queries behind them are disabled until one exists. Skipping this leaves
+--  an administrator on a page of loading skeletons that never resolve, with no
+--  error and nothing to click, which is exactly what happened the first time
+--  this script ran without it.
+--
+--  `academic_sessions_one_current_per_school` allows only one current term, so
+--  this is safe to re-run.
+insert into public.academic_sessions (school_id, name, term, starts_on, ends_on, is_current)
+select s.id, :'session_name', :'session_term'::public.academic_term,
+       :'session_start'::date, :'session_end'::date, true
+  from public.schools s
+ where s.slug = :'school_slug'
+   and not exists (
+     select 1 from public.academic_sessions a
+      where a.school_id = s.id and a.is_current
+   );
 
 -- ── Attach the administrator to it ──────────────────────────────────────────
 update public.users u
@@ -105,6 +130,8 @@ commit;
 
 -- ── What you should see ─────────────────────────────────────────────────────
 select s.name                          as school,
+       (select a.name || ' · ' || a.term from public.academic_sessions a
+         where a.school_id = s.id and a.is_current) as current_term,
        u.email                         as administrator,
        u.status,
        ur.is_super                     as is_founder,
